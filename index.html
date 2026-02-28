@@ -6,58 +6,45 @@
     <title>SISTEM KEHADIRAN MURID SEMSIRA</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root { 
-            --bg-color: #0f172a; 
-            --panel-bg: #1e293b; 
-            --primary: #0ea5e9; 
-            --success: #22c55e; 
-            --danger: #ef4444; 
-            --warning: #f59e0b; 
-            --text-main: #f8fafc; 
-            --text-muted: #94a3b8; 
-        }
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-main); }
         .hidden { display: none !important; }
-        
-        /* Navigation */
         nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); flex-wrap: wrap; gap: 10px;}
         .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 1px; }
         .nav-links button { background: none; border: none; color: var(--text-main); margin-left: 15px; cursor: pointer; font-size: 1rem; padding: 5px; }
         .nav-links button:hover { color: var(--primary); }
-        
-        /* Layout Containers */
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
         .sub-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px; }
-        
-        /* Buttons & Inputs */
         button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         button.btn:hover { background: #0284c7; }
         button.btn-danger { background: var(--danger); }
+        button.btn-danger:hover { background: #dc2626; }
         button.btn-success { background: var(--success); }
         button.btn-warning { background: var(--warning); color: #000; }
         input, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
-        
-        /* Grid System */
+        .inline-input { width: auto; display: inline-block; margin-right: 10px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        
-        /* Table */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
         th { color: var(--primary); }
         .clickable-row:hover { background: rgba(14, 165, 233, 0.1); cursor: pointer; }
         .clickable-text { color: var(--primary); cursor: pointer; text-decoration: underline; font-weight: bold; }
-
+        .clickable-text:hover { color: var(--success); }
         .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index: 1000; }
-
         @media print {
-            nav, .btn, .no-print, input { display: none !important; }
+            nav, .btn, .no-print, input[type="date"], input.no-print { display: none !important; }
             body { background: white; color: black; }
-            .card { border: 1px solid #ccc; color: black; background: none; }
+            .card, .sub-card { background: none; box-shadow: none; border: 1px solid #ccc; color: black; }
+            th, td, p, h2, h3, h4, span { color: black !important; border-color: #ccc; }
+            canvas { max-height: 300px; }
+            input[type="text"], input[type="email"], input[type="number"], select { border: none; background: transparent; color: black; padding: 0; margin: 0; }
+            select { appearance: none; -webkit-appearance: none; font-weight:bold; }
+            .sub-card input, .card input { display: none; }
+            table input[type="text"] { display: inline-block !important; }
         }
     </style>
 </head>
@@ -72,289 +59,355 @@
         <h1 style="font-size: 2.5rem; color: var(--primary); margin-bottom: 20px;">SISTEM KEHADIRAN MURID SEMSIRA</h1>
         <p style="color: var(--text-muted); margin-bottom: 40px;">Sistem pengurusan kehadiran pintar berasaskan teknologi RFID.</p>
         <div class="grid-3">
-            <div class="card">
-                <h3><i class="fas fa-user-tie"></i> Portal Guru</h3>
-                <button class="btn" onclick="showPage('page-login-guru')" style="margin-top:15px; width:100%;">Log Masuk</button>
-                <p style="margin-top:10px;"><a href="#" onclick="showPage('page-signup-guru')" style="color: var(--primary); font-size: 0.9rem;">Daftar Akaun Baru</a></p>
-            </div>
-            <div class="card" style="border: 2px solid var(--success);">
-                <h3 style="color: var(--success);"><i class="fas fa-id-card"></i> Imbasan Pelajar</h3>
-                <button class="btn btn-success" onclick="startScanMode()" style="margin-top:15px; width:100%;">SCAN KEHADIRAN</button>
-            </div>
-            <div class="card">
-                <h3><i class="fas fa-server"></i> Portal Host</h3>
-                <button class="btn btn-danger" onclick="showPage('page-login-host')" style="margin-top:15px; width:100%;">Log Masuk Host</button>
-            </div>
+            <div class="card"><h3><i class="fas fa-user-tie"></i> Portal Guru</h3><p style="margin: 15px 0;">Log masuk untuk mengurus kelas dan profil.</p><button class="btn" onclick="showPage('page-login-guru')">Log Masuk Guru</button><br><br><a href="#" onclick="showPage('page-signup-guru')" style="color: var(--primary);">Daftar Akaun Baru</a></div>
+            <div class="card" style="border: 2px solid var(--success);"><h3 style="color: var(--success);"><i class="fas fa-id-card"></i> Imbasan Pelajar</h3><p style="margin: 15px 0;">Mod Terminal Imbasan Kad RFID.</p><button class="btn btn-success" onclick="startScanMode()">SCAN KEHADIRAN</button></div>
+            <div class="card"><h3><i class="fas fa-server"></i> Portal Host</h3><p style="margin: 15px 0;">Akses pentadbir utama.</p><button class="btn btn-danger" onclick="showPage('page-login-host')">Log Masuk Host</button></div>
         </div>
     </div>
 
-    <div id="page-login-guru" class="container hidden" style="max-width: 400px;">
-        <button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button>
-        <div class="card" style="margin-top:20px;">
-            <h2>Log Masuk Guru</h2>
-            <input type="email" id="login-guru-email" placeholder="E-mel Guru">
-            <input type="password" id="login-guru-pass" placeholder="Kata Laluan">
-            <button class="btn" style="width: 100%;" onclick="login('guru')">Masuk</button>
-        </div>
-    </div>
+    <div id="page-login-guru" class="container hidden" style="max-width: 400px;"><button class="btn no-print" onclick="showPage('page-landing')" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Kembali</button><div class="card"><h2>Log Masuk Guru</h2><input type="email" id="login-guru-email" placeholder="E-mel Guru"><input type="password" id="login-guru-pass" placeholder="Kata Laluan"><button class="btn" style="width: 100%;" onclick="login('guru')">Log Masuk</button></div></div>
+    
+    <div id="page-signup-guru" class="container hidden" style="max-width: 400px;"><button class="btn no-print" onclick="showPage('page-landing')" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Kembali</button><div class="card"><h2>Daftar Guru Baru</h2><input type="text" id="reg-name" placeholder="Nama Penuh"><input type="text" id="reg-phone" placeholder="Nombor Telefon"><input type="email" id="reg-email" placeholder="Alamat E-mel"><input type="password" id="reg-pass" placeholder="Kata Laluan"><button class="btn" style="width: 100%;" onclick="registerGuru()">Daftar</button></div></div>
+    
+    <div id="page-login-host" class="container hidden" style="max-width: 400px;"><button class="btn no-print" onclick="showPage('page-landing')" style="margin-bottom: 20px;"><i class="fas fa-arrow-left"></i> Kembali</button><div class="card"><h2 style="color: var(--danger);">Log Masuk Host</h2><input type="email" id="login-host-email" placeholder="E-mel Host"><input type="password" id="login-host-pass" placeholder="Kata Laluan"><button class="btn btn-danger" style="width: 100%;" onclick="login('host')">Masuk</button></div></div>
 
-    <div id="page-signup-guru" class="container hidden" style="max-width: 400px;">
-        <button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button>
-        <div class="card" style="margin-top:20px;">
-            <h2>Daftar Guru Baru</h2>
-            <input type="text" id="reg-name" placeholder="Nama Penuh">
-            <input type="email" id="reg-email" placeholder="E-mel">
-            <input type="password" id="reg-pass" placeholder="Kata Laluan">
-            <button class="btn" style="width: 100%;" onclick="registerGuru()">Daftar</button>
-        </div>
-    </div>
-
-    <div id="page-login-host" class="container hidden" style="max-width: 400px;">
-        <button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button>
-        <div class="card" style="margin-top:20px;">
-            <h2 style="color: var(--danger);">Log Masuk Host</h2>
-            <input type="email" id="login-host-email" placeholder="E-mel Host">
-            <input type="password" id="login-host-pass" placeholder="Kata Laluan">
-            <button class="btn btn-danger" style="width: 100%;" onclick="login('host')">Masuk</button>
-        </div>
-    </div>
-
-    <div id="page-scan" class="container hidden">
-        <button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button>
-        <div class="card" style="text-align: center; padding: 50px 20px;">
-            <i id="scan-icon" class="fas fa-wifi" style="font-size: 5rem; color: var(--primary); margin-bottom: 20px;"></i>
-            <h2 id="scan-title">SILA IMBAS KAD RFID</h2>
-            <input type="text" id="rfid-listener" style="width: 50%; text-align: center; font-size: 1.5rem; border: 2px solid var(--primary);" placeholder="Sedia..." onkeydown="handleScanInput(event)" autocomplete="off">
-            <div id="scan-result" class="hidden" style="margin-top: 20px; padding: 20px; background: #0f172a; border-radius: 10px;">
-                <h2 id="scan-name" style="color:var(--primary);"></h2>
-                <p id="scan-status-text" style="font-weight:bold; font-size:1.5rem;"></p>
-            </div>
-        </div>
-    </div>
+    <div id="page-scan" class="container hidden"><button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button><div class="card" style="text-align: center; padding: 50px 20px;"><i id="scan-buka-icon" class="fas fa-wifi" style="font-size: 5rem; color: var(--primary); margin-bottom: 20px;"></i><h2 id="scan-title">SILA IMBAS KAD RFID</h2><p id="scan-sub" style="color: var(--text-muted); margin-bottom: 20px;">Pastikan masa komputer selari dengan Waktu Malaysia.</p><input type="text" id="rfid-listener" style="width: 50%; max-width: 400px; text-align: center; font-size: 1.5rem; border: 2px solid var(--primary);" placeholder="UID RFID" onkeydown="handleScanInput(event)" autocomplete="off"><div id="scan-tutup-msg" class="hidden"></div><div id="scan-result" class="hidden" style="margin-top: 20px; padding: 20px; background: #0f172a; border-radius: 10px;"><h2 id="scan-name" style="color:var(--primary);"></h2><p id="scan-status-text" style="font-weight:bold; font-size:1.5rem; margin-top:10px;"></p></div></div></div>
 
     <div id="page-dashboard-guru" class="container hidden">
-        <h2 style="margin-bottom:20px;">Portal Cikgu <span id="guru-name-display" style="color: var(--primary);"></span></h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Portal Cikgu <span id="guru-name-display" style="color: var(--primary);"></span></h2>
+        </div>
         
-        <div id="menu-guru-profil" class="menu-section guru-menu">
+        <div id="menu-guru-profil" class="menu-section guru-menu"><div class="card"><h3>Profil Anda</h3><div class="grid-2" style="margin-top: 15px;"><div><label>Nama Penuh:</label><input type="text" id="pg-name"></div><div><label>Telefon:</label><input type="text" id="pg-phone"></div><div><label>E-mel:</label><input type="email" id="pg-email"></div><div><label>Kata Laluan:</label><input type="text" id="pg-pass"></div></div><button class="btn btn-success no-print" style="margin-top:10px;" onclick="simpanProfilGuru()"><i class="fas fa-save"></i> Simpan</button></div></div>
+        
+        <div id="menu-guru-kelassaya" class="menu-section guru-menu hidden"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3><i class="fas fa-chalkboard"></i> Pengurusan Kelas Saya</h3><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div><div id="pg-kelas-container" style="margin-top: 20px;"></div></div></div>
+
+        <div id="menu-guru-semuakelas" class="menu-section guru-menu hidden"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;"><h3>Status Kehadiran Mengikut Kelas</h3><div><input type="date" id="guru-kelas-date" class="no-print" style="width: 200px; margin-right: 10px;" onchange="renderGuruSemuaKelas()"><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div></div><div id="guru-semuakelas-grid" class="grid-3"></div></div></div>
+
+        <div id="menu-guru-carian" class="menu-section guru-menu hidden"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3><i class="fas fa-search"></i> Carian Murid</h3><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div><div class="grid-2 no-print" style="margin-top: 15px;"><div><label>Cari Nama / KP:</label><input type="text" id="pg-carian-nama" onkeyup="carianMuridGuru()"></div><div><label>Tapis Kelas:</label><select id="pg-carian-kelas" onchange="carianMuridGuru()"></select></div></div><table id="pg-jadual-carian" style="margin-top: 20px;"><thead><tr><th>Nama Murid</th><th>No KP</th><th>Kelas</th><th class="no-print">Tindakan</th></tr></thead><tbody></tbody></table></div></div>
+
+        <div id="menu-guru-keseluruhan" class="menu-section guru-menu hidden"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>Statistik Keseluruhan</h3><div><input type="date" id="guru-overall-date" class="no-print" style="width: 200px; margin-right: 10px;" onchange="renderGuruKeseluruhan()"><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div></div><div style="height: 300px; margin: 20px 0;"><canvas id="guruOverallChart"></canvas></div><div class="grid-3"><div class="sub-card"><h4 style="color: var(--success);">Hadir</h4><ul id="guru-list-hadir" style="margin-left:20px; margin-top:10px;"></ul></div><div class="sub-card"><h4 style="color: var(--warning);">Lewat</h4><ul id="guru-list-lewat" style="margin-left:20px; margin-top:10px;"></ul></div><div class="sub-card"><h4 style="color: var(--danger);">Tidak Hadir</h4><ul id="guru-list-takhadir" style="margin-left:20px; margin-top:10px;"></ul></div></div></div></div>
+
+        <div id="menu-guru-uruskehadiran" class="menu-section guru-menu hidden"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;"><h3><i class="fas fa-user-check"></i> Kehadiran Kelas Saya</h3><div><input type="date" id="guru-myclass-date" class="no-print" style="width: 200px; margin-right: 10px;" onchange="renderGuruKehadiranKelasSaya()"><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div></div><div id="pg-myclass-container"></div></div></div>
+
+        <div id="menu-guru-sejarah" class="menu-section guru-menu hidden">
             <div class="card">
-                <h3>Profil Anda</h3>
-                <div class="grid-2">
-                    <div><label>Nama:</label><input type="text" id="pg-name"></div>
-                    <div><label>E-mel:</label><input type="email" id="pg-email"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3><i class="fas fa-history"></i> Sejarah Keseluruhan Murid</h3>
+                    <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak Laporan</button>
                 </div>
-                <button class="btn btn-success" onclick="simpanProfilGuru()">Simpan</button>
+                <div class="grid-3 no-print" style="margin-top: 15px; background: #0f172a; padding: 15px; border-radius: 8px;">
+                    <div><label>Pilih Tahun:</label><select id="guru-sej-tahun" onchange="paparSejarah('guru')"></select></div>
+                    <div><label>Pilih Kelas:</label><select id="guru-sej-kelas" onchange="paparSejarah('guru')"></select></div>
+                    <div><label>Tarikh Spesifik (Pilihan):</label><input type="date" id="guru-sej-tarikh" onchange="paparSejarah('guru')"></div>
+                </div>
+                <table id="guru-sej-table" style="margin-top: 20px;">
+                    <thead><tr><th>Nama Murid</th><th>No KP</th><th style="color:var(--success);">Hadir</th><th style="color:var(--warning);">Lewat</th><th style="color:var(--danger);">Tidak Hadir</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
 
-        <div id="menu-guru-uruskehadiran" class="menu-section guru-menu hidden">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>Kehadiran Kelas Saya</h3>
-                    <input type="date" id="guru-myclass-date" style="width:200px;" onchange="renderGuruKehadiranKelasSaya()">
-                </div>
-                <div id="pg-myclass-container" style="margin-top:20px;"></div>
-            </div>
-        </div>
     </div>
 
     <div id="page-dashboard-host" class="container hidden">
-        <h2 style="color: var(--danger); margin-bottom:20px;"><i class="fas fa-server"></i> Host Utama</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;"><h2 style="color: var(--danger);"><i class="fas fa-server"></i> Host Utama</h2></div>
         
-        <div id="menu-host-tetapan" class="menu-section host-menu">
+        <div id="menu-host-statistik" class="menu-section host-menu"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>Statistik Keseluruhan</h3><div><input type="date" id="host-overall-date" class="no-print" style="width: 200px; margin-right: 10px;" onchange="renderHostStatistik()"><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div></div><div style="height: 300px; margin: 20px 0;"><canvas id="hostOverallChart"></canvas></div><div class="grid-3"><div class="sub-card"><h4 style="color: var(--success);">Hadir</h4><ul id="host-list-hadir" style="margin-left:20px; margin-top:10px;"></ul></div><div class="sub-card"><h4 style="color: var(--warning);">Lewat</h4><ul id="host-list-lewat" style="margin-left:20px; margin-top:10px;"></ul></div><div class="sub-card"><h4 style="color: var(--danger);">Tidak Hadir</h4><ul id="host-list-takhadir" style="margin-left:20px; margin-top:10px;"></ul></div></div></div></div>
+
+        <div id="menu-host-kelas-stats" class="menu-section host-menu hidden"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;"><h3>Statistik Kehadiran Kelas</h3><div><input type="date" id="host-kelas-date" class="no-print" style="width: 200px; margin-right: 10px;" onchange="renderHostKelasStats()"><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div></div><div id="host-kelas-grid" class="grid-3"></div></div></div>
+        
+        <div id="menu-host-datamurid" class="menu-section host-menu hidden"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3><i class="fas fa-search"></i> Carian Data Murid</h3><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div><div class="grid-2 no-print" style="margin-top: 15px;"><div><label>Cari Nama / No KP:</label><input type="text" id="carian-nama" onkeyup="carianMuridLaksana()"></div><div><label>Tapis Kelas:</label><select id="carian-kelas" onchange="carianMuridLaksana()"></select></div></div><table id="jadual-carian-murid" style="margin-top: 20px;"><thead><tr><th>Nama Murid</th><th>No KP</th><th>Kelas</th><th class="no-print">Tindakan</th></tr></thead><tbody></tbody></table></div></div>
+        
+        <div id="menu-host-guru" class="menu-section host-menu hidden"><div class="card"><div style="display:flex; justify-content:space-between; align-items:center;"><h3>Pengurusan Data Sekolah</h3><button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button></div><div class="sub-card no-print" style="margin-top: 15px; border: 1px dashed var(--primary);"><h4><i class="fas fa-user-plus"></i> Tambah Guru Baru</h4><div class="grid-2" style="margin-top:10px;"><input type="text" id="add-g-name" placeholder="Nama Guru"><input type="email" id="add-g-email" placeholder="E-mel"><input type="text" id="add-g-phone" placeholder="No Telefon"><input type="text" id="add-g-pass" placeholder="Kata Laluan"></div><button class="btn btn-success" onclick="tambahGuruHost()">Tambah Guru</button></div><table id="host-table-guru"><thead><tr><th>Nama Guru</th><th>Telefon</th><th>Emel</th><th class="no-print">Tindakan</th></tr></thead><tbody></tbody></table></div></div>
+        
+        <div id="menu-host-tetapan" class="menu-section host-menu hidden">
             <div class="card">
-                <h3><i class="fas fa-clock"></i> Tetapan Masa & Cuti</h3>
-                <div class="grid-3" style="margin-top:20px;">
+                <h3><i class="fas fa-calendar-alt"></i> Tetapan Sekolah, Masa & Cuti</h3>
+                <div class="grid-3" style="margin-top: 20px;">
                     <div class="sub-card">
-                        <label>Waktu Buka Scan:</label>
-                        <input type="time" id="t-buka">
-                        <label>Waktu Mula Lewat:</label>
-                        <input type="time" id="t-lewat">
-                        <label>Waktu Tutup Scan:</label>
-                        <input type="time" id="t-tutup">
-                        <button class="btn btn-warning" style="width:100%; color:black;" onclick="simpanWaktu()">Simpan Waktu</button>
+                        <h4>Jumlah Hari Operasi Semasa</h4>
+                        <input type="number" id="tetapan-hari" class="inline-input" style="width: 100%; margin-top: 10px;">
+                        <button class="btn btn-success" onclick="simpanHariOperasi()" style="margin-top: 10px; width: 100%;">Simpan Hari</button>
                     </div>
                     <div class="sub-card">
-                        <label>Tambah Cuti (RFID Disable):</label>
-                        <input type="date" id="c-date">
-                        <input type="text" id="c-nama" placeholder="Nama Cuti">
-                        <button class="btn btn-primary" style="width:100%;" onclick="tambahCuti()">Tambah Cuti</button>
-                        <ul id="list-cuti" style="margin-top:10px; font-size:0.9rem;"></ul>
+                        <h4 style="color: var(--primary);">Tetapan Waktu Kehadiran</h4>
+                        <div style="margin-top: 10px;">
+                            <label style="font-size: 0.9rem;">Buka Kehadiran:</label>
+                            <input type="time" id="tetapan-waktu-buka" class="inline-input" style="width: 100%;">
+                            <label style="font-size: 0.9rem;">Mula Lewat:</label>
+                            <input type="time" id="tetapan-waktu-lewat" class="inline-input" style="width: 100%;">
+                            <label style="font-size: 0.9rem;">Tutup Kehadiran:</label>
+                            <input type="time" id="tetapan-waktu-tutup" class="inline-input" style="width: 100%;">
+                            <button class="btn btn-warning" onclick="simpanWaktuOperasi()" style="margin-top: 10px; width: 100%; color: black;"><i class="fas fa-clock"></i> Simpan Waktu</button>
+                        </div>
+                    </div>
+                    <div class="sub-card">
+                        <h4>Senarai Cuti</h4>
+                        <div style="margin-top: 10px;">
+                            <input type="date" id="tambah-cuti-date" class="inline-input" style="width: 100%;">
+                            <input type="text" id="tambah-cuti-nama" class="inline-input" placeholder="Nama Cuti" style="width: 100%;">
+                            <button class="btn btn-primary" onclick="tambahCuti()" style="margin-top: 5px; width: 100%;">Tambah</button>
+                        </div>
+                        <ul id="senarai-cuti-ui" style="margin-left: 20px; margin-top: 15px;"></ul>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="modal-override" class="modal-overlay hidden">
-        <div class="card" style="width: 350px;">
-            <h3>Ubah Status</h3>
-            <input type="hidden" id="ovr-id">
-            <select id="ovr-status">
-                <option value="Hadir">Hadir</option>
-                <option value="Lewat">Lewat</option>
-                <option value="Tak Hadir">Tidak Hadir (Padam)</option>
-            </select>
-            <div style="text-align:right;">
-                <button class="btn" onclick="document.getElementById('modal-override').classList.add('hidden')">Batal</button>
-                <button class="btn btn-success" onclick="simpanOverride()">OK</button>
+        <div id="menu-host-sejarah" class="menu-section host-menu hidden">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3><i class="fas fa-history"></i> Sejarah Keseluruhan Murid</h3>
+                    <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak Laporan</button>
+                </div>
+                <div class="grid-3 no-print" style="margin-top: 15px; background: #0f172a; padding: 15px; border-radius: 8px;">
+                    <div><label>Pilih Tahun:</label><select id="host-sej-tahun" onchange="paparSejarah('host')"></select></div>
+                    <div><label>Pilih Kelas:</label><select id="host-sej-kelas" onchange="paparSejarah('host')"></select></div>
+                    <div><label>Tarikh Spesifik (Pilihan):</label><input type="date" id="host-sej-tarikh" onchange="paparSejarah('host')"></div>
+                </div>
+                <table id="host-sej-table" style="margin-top: 20px;">
+                    <thead><tr><th>Nama Murid</th><th>No KP</th><th style="color:var(--success);">Hadir</th><th style="color:var(--warning);">Lewat</th><th style="color:var(--danger);">Tidak Hadir</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
 
+    <div id="page-host-teacher-detail" class="container hidden"><div class="no-print" style="display:flex; justify-content:space-between; margin-bottom: 20px;"><button class="btn" onclick="kembaliKeHostMenu('guru')"><i class="fas fa-arrow-left"></i> Kembali</button><button class="btn" onclick="window.print()"><i class="fas fa-print"></i> Cetak Rekod Guru</button></div><div class="card" style="border-top: 4px solid var(--primary);"><h3>Profil Guru</h3><input type="hidden" id="det-g-id"><div class="grid-2"><div><label>Nama:</label><input type="text" id="det-g-name"></div><div><label>Telefon:</label><input type="text" id="det-g-phone"></div><div><label>E-mel:</label><input type="email" id="det-g-email"></div><div><label>Kata Laluan:</label><input type="text" id="det-g-pass"></div></div><div class="no-print" style="margin-top: 15px;"><button class="btn btn-success" onclick="simpanEditGuru()">Simpan Profil</button> <button class="btn btn-danger" onclick="buangGuru()">Padam Guru</button></div></div><div class="card"><h3>Pengurusan Kelas & Murid</h3><div class="sub-card no-print" style="margin-top: 15px;"><input type="text" id="add-k-name" class="inline-input" placeholder="Nama Kelas Baru"><button class="btn btn-success" onclick="tambahKelasHost()">Tambah Kelas</button></div><div id="det-g-kelas-container"></div></div></div>
+    
+    <div id="page-host-class-detail" class="container hidden"><div class="no-print" style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 20px;"><button class="btn" onclick="showPage(window.lastReturnPageKelas)"><i class="fas fa-arrow-left"></i> Kembali</button><div><input type="date" id="hkd-date-picker" class="inline-input no-print" onchange="tukarTarikhKelasDetail()" style="width: 200px;"><button class="btn" onclick="window.print()"><i class="fas fa-print"></i> Cetak Laporan</button></div></div><div class="card"><h2 id="hkd-nama-kelas" style="color: var(--primary);"></h2><p>Guru Kelas: <span id="hkd-nama-guru" style="font-weight:bold;"></span> | Tarikh: <span id="hkd-tarikh"></span></p><p style="font-size:1.2rem; margin-top:5px;">Kehadiran: <span id="hkd-nisbah"></span> Murid</p><div style="height: 250px; margin: 20px 0;"><canvas id="hostKelasChart"></canvas></div><div class="grid-3" style="margin-top: 20px;"><div class="sub-card" style="border: 1px solid var(--success);"><h4 style="color: var(--success);">Senarai Hadir</h4><ul id="hkd-list-hadir" style="margin-left: 20px; margin-top: 10px;"></ul></div><div class="sub-card" style="border: 1px solid var(--warning);"><h4 style="color: var(--warning);">Senarai Lewat</h4><ul id="hkd-list-lewat" style="margin-left: 20px; margin-top: 10px;"></ul></div><div class="sub-card" style="border: 1px solid var(--danger);"><h4 style="color: var(--danger);">Senarai Tidak Hadir</h4><ul id="hkd-list-takhadir" style="margin-left: 20px; margin-top: 10px;"></ul></div></div></div><div class="card" style="margin-top: 20px;"><h3><i class="fas fa-users"></i> Senarai Penuh Murid</h3><ul id="hkd-list-semua" style="margin-left: 20px; margin-top: 15px;"></ul></div></div>
+
+    <div id="page-host-student-detail" class="container hidden">
+        <div class="no-print" style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+            <button class="btn" id="btn-kembali-murid"><i class="fas fa-arrow-left"></i> Kembali</button>
+            <div>
+                <button class="btn btn-warning" id="btn-edit-kehadiran-detail" style="margin-right: 10px; color: black;"><i class="fas fa-edit"></i> Edit Kehadiran</button>
+                <button class="btn" onclick="window.print()"><i class="fas fa-print"></i> Cetak Rekod</button>
+            </div>
+        </div>
+        <div class="card" style="border-top: 4px solid var(--success);">
+            <h2 id="indv-nama" style="color: var(--primary);"></h2>
+            <p>No KP: <span id="indv-ic"></span> | Kelas Semasa: <span id="indv-kelas"></span></p>
+            <div style="height: 250px; margin: 20px 0;"><canvas id="hostStudentChart"></canvas></div>
+            <div class="grid-3" style="text-align: center; margin-bottom: 20px;">
+                <div style="background: rgba(34, 197, 94, 0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--success);"><h4 style="color: var(--success);">Hadir</h4><div style="font-size: 2rem; font-weight: bold; margin-top: 5px;"><span id="indv-count-hadir">0</span> <span style="font-size:1rem; font-weight:normal;">Hari</span></div></div>
+                <div style="background: rgba(245, 158, 11, 0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--warning);"><h4 style="color: var(--warning);">Lewat</h4><div style="font-size: 2rem; font-weight: bold; margin-top: 5px;"><span id="indv-count-lewat">0</span> <span style="font-size:1rem; font-weight:normal;">Hari</span></div></div>
+                <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--danger);"><h4 style="color: var(--danger);">Tidak Hadir</h4><div style="font-size: 2rem; font-weight: bold; margin-top: 5px;"><span id="indv-count-takhadir">0</span> <span style="font-size:1rem; font-weight:normal;">Hari</span></div></div>
+            </div>
+            <h4 style="margin-top: 20px;">Sejarah Kehadiran Penuh:</h4>
+            <table id="indv-table"><thead><tr><th>Tarikh</th><th>Status</th><th>Masa</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+
+    <div id="modal-override" class="modal-overlay hidden"><div class="card" style="width: 90%; max-width: 400px; border: 2px solid var(--warning);"><h3 style="color: var(--warning);">Ubah Kehadiran</h3><p id="ovr-nama" style="font-weight:bold; margin-bottom: 10px;"></p><input type="hidden" id="ovr-id"><label>Pilih Tarikh:</label><input type="date" id="ovr-date"><label>Status:</label><select id="ovr-status"><option value="Hadir">Hadir</option><option value="Lewat">Lewat</option><option value="Tak Hadir">Tidak Hadir (Padam Rekod)</option></select><label>Masa (Optional):</label><input type="time" id="ovr-time" value="07:30"><div style="margin-top: 15px; text-align:right;"><button class="btn" onclick="document.getElementById('modal-override').classList.add('hidden')">Batal</button> <button class="btn btn-warning" onclick="simpanOverride()">Simpan</button></div></div></div>
+
     <script>
-        // --- DATA BASE (MOCKUP) ---
+        // --- DATABASE ---
         let db = {
             host: { email: 'hostsemsira@gmail.com', pass: 'Semsira1969' },
-            gurus: [{ id: 1, name: 'Cikgu Ahmad', email: 'ahmad@gmail.com', pass: '123' }],
-            kelas: [{ id: 1, name: '5 Sains 1', guruId: 1 }],
-            murid: [
-                { id: 1, nama: 'Ali Abu', ic: '080101', uid: 'A1B2', kelasId: 1, kehadiran: [] },
-                { id: 2, nama: 'Siti Aminah', ic: '080202', uid: 'C3D4', kelasId: 1, kehadiran: [] }
+            gurus: [{ id: 1, name: 'Ahmad Albab', phone: '0123456789', email: 'ahmad@semsira.edu.my', pass: '123' }],
+            kelas: [
+                { id: 1, name: '5 Sains 1', guruId: 1 },
+                { id: 2, name: '4 Sains 1', guruId: 1 }
             ],
-            cuti: [],
+            murid: [
+                { id: 1, nama: 'Ali bin Abu', ic: '080101015563', uid: 'A1B2C3D4', kelasId: 1, sejarahKelas: [{tahun: '2025', kelasId: 2}, {tahun: '2026', kelasId: 1}], kehadiran: [{tarikh:'2025-05-15', status:'Hadir', masa:'07:15:00'},{tarikh:'2026-02-28', status:'Hadir', masa:'07:20:00'}] },
+                { id: 2, nama: 'Siti Aminah', ic: '080202026654', uid: 'E5F6G7H8', kelasId: 1, sejarahKelas: [{tahun: '2026', kelasId: 1}], kehadiran: [{tarikh:'2026-02-28', status:'Lewat', masa:'07:45:00'}] }
+            ],
+            hariOperasi: 10, cuti: [],
+            // UPDATE BARU: TETAPAN MASA KEHADIRAN (Default Values)
             tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' }
         };
 
-        let currentUser = null;
+        let currentUser = null; let currentClassDetailId = null; 
+        let charts = { hostOverall: null, hostKelas: null, hostStudent: null, guruOverall: null };
 
-        // --- CORE FUNCTIONS ---
-        function showPage(id) {
-            document.querySelectorAll('.container').forEach(p => p.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-            document.getElementById('navbar').classList.toggle('hidden', ['page-landing','page-login-guru','page-signup-guru','page-login-host','page-scan'].includes(id));
+        const getLocalSystemDate = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; };
+        const getLocalSystemTime = () => { const now = new Date(); return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`; };
+        const getCurrentYear = () => { return new Date().getFullYear().toString(); };
+
+        function showPage(pageId) {
+            document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+            document.getElementById('navbar').classList.toggle('hidden', ['page-landing','page-login-guru','page-signup-guru','page-login-host','page-scan'].includes(pageId));
         }
+
+        function switchMenu(menuId, roleType = 'guru') {
+            document.querySelectorAll(`.${roleType}-menu`).forEach(el => el.classList.add('hidden'));
+            
+            if(roleType === 'host') {
+                document.getElementById(`menu-host-${menuId}`).classList.remove('hidden');
+                if(menuId === 'statistik') { document.getElementById('host-overall-date').value = getLocalSystemDate(); renderHostStatistik(); }
+                if(menuId === 'kelas-stats') { document.getElementById('host-kelas-date').value = getLocalSystemDate(); renderHostKelasStats(); }
+                if(menuId === 'datamurid') renderDataMurid(); if(menuId === 'guru') renderHostGuru(); if(menuId === 'tetapan') renderTetapan();
+                if(menuId === 'sejarah') renderDropdownSejarah('host');
+            } else if(roleType === 'guru') { 
+                document.getElementById(`menu-guru-${menuId}`).classList.remove('hidden');
+                if(menuId === 'profil') renderGuruProfil();
+                if(menuId === 'kelassaya') renderGuruKelasSaya();
+                if(menuId === 'semuakelas') { document.getElementById('guru-kelas-date').value = getLocalSystemDate(); renderGuruSemuaKelas(); }
+                if(menuId === 'carian') renderCarianGuruMenu();
+                if(menuId === 'keseluruhan') { document.getElementById('guru-overall-date').value = getLocalSystemDate(); renderGuruKeseluruhan(); }
+                if(menuId === 'uruskehadiran') { document.getElementById('guru-myclass-date').value = getLocalSystemDate(); renderGuruKehadiranKelasSaya(); }
+                if(menuId === 'sejarah') renderDropdownSejarah('guru');
+            }
+        }
+
+        function kembaliKeHostMenu(menuId) { showPage('page-dashboard-host'); switchMenu(menuId, 'host'); }
 
         function login(role) {
             if(role === 'host') {
                 if(document.getElementById('login-host-email').value === db.host.email && document.getElementById('login-host-pass').value === db.host.pass) {
-                    setupNav('host'); showPage('page-dashboard-host'); switchMenu('tetapan', 'host');
-                } else alert("Salah!");
+                    currentUser = null; setupHostNav(); showPage('page-dashboard-host'); switchMenu('statistik', 'host');
+                } else alert("Emel atau Kata Laluan Host Salah!");
             } else {
-                let g = db.gurus.find(x => x.email === document.getElementById('login-guru-email').value);
-                if(g && g.pass === document.getElementById('login-guru-pass').value) {
-                    currentUser = g; document.getElementById('guru-name-display').innerText = g.name;
-                    setupNav('guru'); showPage('page-dashboard-guru'); switchMenu('uruskehadiran', 'guru');
-                } else alert("Salah!");
+                const g = db.gurus.find(x => x.email === document.getElementById('login-guru-email').value && x.pass === document.getElementById('login-guru-pass').value);
+                if(g) { currentUser = g; document.getElementById('guru-name-display').innerText = g.name; setupGuruNav(); showPage('page-dashboard-guru'); switchMenu('profil', 'guru'); } else alert("Emel atau kata laluan guru salah!");
             }
+            document.getElementById('login-host-email').value = ''; document.getElementById('login-host-pass').value = '';
+            document.getElementById('login-guru-email').value = ''; document.getElementById('login-guru-pass').value = '';
         }
+        
+        function registerGuru() { const n = document.getElementById('reg-name').value, p = document.getElementById('reg-phone').value, e = document.getElementById('reg-email').value, pass = document.getElementById('reg-pass').value; if(n && e && pass) { db.gurus.push({id: Date.now(), name: n, phone: p, email: e, pass: pass}); alert("Pendaftaran Berjaya! Sila log masuk."); showPage('page-login-guru'); } }
+        function logout() { currentUser = null; showPage('page-landing'); }
+        
+        function setupHostNav() { document.getElementById('nav-menus').innerHTML = `<button onclick="switchMenu('statistik', 'host')">Keseluruhan</button><button onclick="switchMenu('kelas-stats', 'host')">Kehadiran Kelas</button><button onclick="switchMenu('datamurid', 'host')">Carian Murid</button><button onclick="switchMenu('guru', 'host')">Urus Data</button><button onclick="switchMenu('sejarah', 'host')">Sejarah</button><button onclick="switchMenu('tetapan', 'host')">Tetapan Cuti</button><button onclick="logout()" style="color:var(--danger);">Keluar</button>`; }
+        
+        function setupGuruNav() { document.getElementById('nav-menus').innerHTML = `<button onclick="switchMenu('profil', 'guru')"><i class="fas fa-user"></i> Profil</button><button onclick="switchMenu('kelassaya', 'guru')">1. Kelas Saya</button><button onclick="switchMenu('semuakelas', 'guru')">2. Kehadiran Kelas</button><button onclick="switchMenu('carian', 'guru')">3. Carian Murid</button><button onclick="switchMenu('keseluruhan', 'guru')">4. Keseluruhan</button><button onclick="switchMenu('uruskehadiran', 'guru')">5. Kehadiran Kelas Saya</button><button onclick="switchMenu('sejarah', 'guru')">6. Sejarah</button><button onclick="logout()" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i> Keluar</button>`; }
 
-        function setupNav(role) {
-            let nav = document.getElementById('nav-menus');
-            if(role === 'host') {
-                nav.innerHTML = `<button onclick="switchMenu('tetapan','host')">Tetapan</button><button onclick="location.reload()">Keluar</button>`;
-            } else {
-                nav.innerHTML = `<button onclick="switchMenu('profil','guru')">Profil</button><button onclick="switchMenu('uruskehadiran','guru')">Kehadiran</button><button onclick="location.reload()">Keluar</button>`;
-            }
-        }
+        function renderGuruProfil() { document.getElementById('pg-name').value = currentUser.name; document.getElementById('pg-phone').value = currentUser.phone; document.getElementById('pg-email').value = currentUser.email; document.getElementById('pg-pass').value = currentUser.pass; }
+        function simpanProfilGuru() { currentUser.name = document.getElementById('pg-name').value; currentUser.phone = document.getElementById('pg-phone').value; currentUser.email = document.getElementById('pg-email').value; currentUser.pass = document.getElementById('pg-pass').value; document.getElementById('guru-name-display').innerText = currentUser.name; alert("Profil berjaya dikemaskini!"); }
 
-        function switchMenu(menuId, role) {
-            document.querySelectorAll(`.${role}-menu`).forEach(m => m.classList.add('hidden'));
-            document.getElementById(`menu-${role}-${menuId}`).classList.remove('hidden');
-            if(menuId === 'tetapan') renderTetapan();
-            if(menuId === 'uruskehadiran') renderGuruKehadiranKelasSaya();
-        }
+        function renderGuruKelasSaya() { const c = document.getElementById('pg-kelas-container'); c.innerHTML = ''; const kelasGuru = db.kelas.filter(k => k.guruId === currentUser.id); if(kelasGuru.length === 0) { c.innerHTML = `<p style="color:var(--warning); margin-bottom:10px;">Anda belum mempunyai kelas.</p><input type="text" id="pg-add-kelas-name" class="inline-input no-print" placeholder="Masukkan Nama Kelas (Cth: 5 Sains)"><button class="btn btn-success no-print" onclick="pgTambahKelas()">Tambah Kelas</button>`; return; } kelasGuru.forEach(k => { let html = `<div class="sub-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><div style="display:flex; align-items:center;"><input type="text" id="pg-edit-kelas-${k.id}" value="${k.name}" class="inline-input" style="font-size:1.2rem; font-weight:bold; color:var(--primary); width:200px;"><button class="btn no-print" style="padding: 5px 10px;" onclick="pgSimpanNamaKelas(${k.id})"><i class="fas fa-save"></i></button></div><button class="btn btn-danger no-print" onclick="pgBuangKelas(${k.id})"><i class="fas fa-trash"></i></button></div><div class="no-print" style="background:#0f172a; padding:15px; border-radius:5px; margin-bottom:15px; border:1px dashed var(--primary);"><input type="text" id="pg-add-m-n-${k.id}" class="inline-input" placeholder="Nama Penuh"><input type="text" id="pg-add-m-ic-${k.id}" class="inline-input" placeholder="No IC"><input type="text" id="pg-add-m-u-${k.id}" class="inline-input" placeholder="UID"><button class="btn btn-success" onclick="pgTambahMurid(${k.id})">Tambah</button></div><table><thead><tr><th>Nama</th><th>IC</th><th>UID</th><th class="no-print">Tindakan</th></tr></thead><tbody>`; const muridKelas = db.murid.filter(m => m.kelasId === k.id); if(muridKelas.length === 0) { html += `<tr><td colspan="4" style="text-align:center;">Belum ada murid.</td></tr>`; } else { muridKelas.forEach(m => { html += `<tr><td><input type="text" id="pg-em-n-${m.id}" value="${m.nama}"></td><td><input type="text" id="pg-em-ic-${m.id}" value="${m.ic}"></td><td><input type="text" id="pg-em-u-${m.id}" value="${m.uid}"></td><td class="no-print"><button class="btn btn-success" onclick="pgSimpanMurid(${m.id})"><i class="fas fa-save"></i></button><button class="btn btn-danger" onclick="pgBuangMurid(${m.id})"><i class="fas fa-trash"></i></button></td></tr>`; }); } c.innerHTML += html + `</tbody></table></div>`; }); }
+        function pgTambahKelas() { const n = document.getElementById('pg-add-kelas-name').value; if(n) { db.kelas.push({id:Date.now(), name:n, guruId:currentUser.id}); renderGuruKelasSaya(); } }
+        function pgSimpanNamaKelas(kId) { const k = db.kelas.find(x=>x.id===kId); k.name = document.getElementById(`pg-edit-kelas-${kId}`).value; alert("Nama kelas disimpan!"); }
+        function pgBuangKelas(kId) { if(confirm("Pasti mahu buang?")) { db.kelas = db.kelas.filter(x=>x.id!==kId); db.murid = db.murid.filter(x=>x.kelasId!==kId); renderGuruKelasSaya(); } }
+        function pgTambahMurid(kId) { const n=document.getElementById(`pg-add-m-n-${kId}`).value, ic=document.getElementById(`pg-add-m-ic-${kId}`).value, u=document.getElementById(`pg-add-m-u-${kId}`).value; if(n&&ic) { db.murid.push({id:Date.now(), nama:n, ic:ic, uid:u, kelasId:kId, sejarahKelas:[{tahun:getCurrentYear(), kelasId:kId}], kehadiran:[]}); renderGuruKelasSaya(); } }
+        function pgSimpanMurid(mId) { const m=db.murid.find(x=>x.id===mId); m.nama=document.getElementById(`pg-em-n-${mId}`).value; m.ic=document.getElementById(`pg-em-ic-${mId}`).value; m.uid=document.getElementById(`pg-em-u-${mId}`).value; alert("Maklumat murid disimpan!"); }
+        function pgBuangMurid(mId) { if(confirm("Pasti?")) { db.murid = db.murid.filter(x=>x.id!==mId); renderGuruKelasSaya(); } }
 
-        // --- SCANNER LOGIC ---
-        function startScanMode() { 
-            showPage('page-scan'); 
-            setTimeout(() => document.getElementById('rfid-listener').focus(), 500);
-        }
+        function renderGuruSemuaKelas() { const container = document.getElementById('guru-semuakelas-grid'); container.innerHTML = ''; const date = document.getElementById('guru-kelas-date').value || getLocalSystemDate(); db.kelas.forEach(k => { const mk = db.murid.filter(m => m.kelasId === k.id); let h=0; mk.forEach(m => { if(m.kehadiran.some(r=>r.tarikh===date)) h++; }); const prct = mk.length===0?0:Math.round((h/mk.length)*100); container.innerHTML += `<div class="card clickable-row" style="text-align:center; border: 1px solid var(--primary);" onclick="paparKelasDetail(${k.id}, '${date}', 'page-dashboard-guru')"><h2 style="color:var(--primary);">${k.name}</h2><div style="font-size:2rem; font-weight:bold; margin: 10px 0;">${prct}%</div><p>Hadir: ${h}/${mk.length}</p></div>`; }); }
+        function renderCarianGuruMenu() { const selectKelas = document.getElementById('pg-carian-kelas'); selectKelas.innerHTML = '<option value="">Semua Kelas</option>'; db.kelas.forEach(k => { selectKelas.innerHTML += `<option value="${k.id}">${k.name}</option>`; }); carianMuridGuru(); }
+        function carianMuridGuru() { const teksCarian = document.getElementById('pg-carian-nama').value.toLowerCase(); const idKelas = document.getElementById('pg-carian-kelas').value; const jadual = document.querySelector('#pg-jadual-carian tbody'); jadual.innerHTML = ''; let hasilCarian = db.murid.filter(m => { let padanNamaIC = m.nama.toLowerCase().includes(teksCarian) || m.ic.includes(teksCarian); let padanKelas = idKelas === "" ? true : (m.kelasId.toString() === idKelas); return padanNamaIC && padanKelas; }); if (hasilCarian.length === 0) { jadual.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tiada rekod.</td></tr>'; return; } hasilCarian.forEach(m => { const k = db.kelas.find(x => x.id === m.kelasId); jadual.innerHTML += `<tr class="clickable-row"><td>${m.nama}</td><td>${m.ic}</td><td>${k?k.name:'-'}</td><td class="no-print"><button class="btn btn-primary" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-guru')"><i class="fas fa-eye"></i> Profil</button></td></tr>`; }); }
+        
+        function renderGuruKeseluruhan() { const date = document.getElementById('guru-overall-date').value || getLocalSystemDate(); let h=0, l=0, th=0; let lstH=[], lstL=[], lstTH=[]; db.murid.forEach(m => { const r = m.kehadiran.find(x => x.tarikh === date); if(r) { if(r.status === 'Lewat') { l++; lstL.push(`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-guru')">${m.nama}</span></li>`); } else { h++; lstH.push(`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-guru')">${m.nama}</span></li>`); } } else { th++; lstTH.push(`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-guru')">${m.nama}</span></li>`); } }); if(charts.guruOverall) charts.guruOverall.destroy(); charts.guruOverall = new Chart(document.getElementById('guruOverallChart').getContext('2d'), { type:'bar', data:{labels:['Hadir','Lewat','Tak Hadir'], datasets:[{data:[h,l,th], backgroundColor:['#22c55e','#f59e0b','#ef4444']}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{color:'#fff',stepSize:1}}, x:{ticks:{color:'#fff'}}}}}); document.getElementById('guru-list-hadir').innerHTML = lstH.join('') || 'Tiada'; document.getElementById('guru-list-lewat').innerHTML = lstL.join('') || 'Tiada'; document.getElementById('guru-list-takhadir').innerHTML = lstTH.join('') || 'Tiada'; }
+        
+        function renderGuruKehadiranKelasSaya() { const c = document.getElementById('pg-myclass-container'); c.innerHTML = ''; const date = document.getElementById('guru-myclass-date').value || getLocalSystemDate(); const kelasGuru = db.kelas.filter(k => k.guruId === currentUser.id); if(kelasGuru.length === 0) { c.innerHTML = '<p style="color:var(--warning);">Tiada kelas didaftarkan.</p>'; return; } kelasGuru.forEach(k => { const mk = db.murid.filter(m => m.kelasId === k.id); let html = `<div class="sub-card"><h4 style="font-size:1.5rem; color:var(--primary); margin-bottom:15px;">${k.name}</h4><table style="background:var(--panel-bg); width: 100%;"><thead><tr><th>Nama Murid</th><th>Status Kehadiran</th><th class="no-print">Tindakan</th></tr></thead><tbody>`; if(mk.length === 0) { html += `<tr><td colspan="3" style="text-align:center;">Tiada murid.</td></tr>`; } else { mk.forEach(m => { const r = m.kehadiran.find(x => x.tarikh === date); let statT = r ? r.status : 'Belum Hadir', statC = 'var(--danger)'; if(r && r.status === 'Hadir') statC = 'var(--success)'; if(r && r.status === 'Lewat') statC = 'var(--warning)'; html += `<tr><td><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-guru')">${m.nama}</span></td><td style="color:${statC}; font-weight: bold;">${statT}</td><td class="no-print"><button class="btn btn-warning" style="color:black; font-size: 0.8rem;" onclick="bukaOverride(${m.id})"><i class="fas fa-edit"></i> Edit</button></td></tr>`; }); } c.innerHTML += html + `</tbody></table></div>`; }); }
 
-        function handleScanInput(e) { 
-            if(e.key === 'Enter') {
-                let uid = e.target.value.trim().toUpperCase();
-                processRFID(uid);
-                e.target.value = '';
-            }
-        }
+        function renderDropdownSejarah(role) { const elTahun = document.getElementById(`${role}-sej-tahun`); const elKelas = document.getElementById(`${role}-sej-kelas`); let tahunSet = new Set(); db.murid.forEach(m => { if(m.sejarahKelas) { m.sejarahKelas.forEach(sk => tahunSet.add(sk.tahun)); } else { tahunSet.add(getCurrentYear()); } }); let tahunArray = Array.from(tahunSet).sort().reverse(); elTahun.innerHTML = ''; tahunArray.forEach(t => elTahun.innerHTML += `<option value="${t}">${t}</option>`); elKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>'; db.kelas.forEach(k => elKelas.innerHTML += `<option value="${k.id}">${k.name}</option>`); paparSejarah(role); }
 
-        function processRFID(uid) {
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-            const dateStr = now.toISOString().split('T')[0];
+        function paparSejarah(role) { const tahun = document.getElementById(`${role}-sej-tahun`).value; const kelasIdStr = document.getElementById(`${role}-sej-kelas`).value; const tarikhSpesifik = document.getElementById(`${role}-sej-tarikh`).value; const tbody = document.querySelector(`#${role}-sej-table tbody`); tbody.innerHTML = ''; if(!kelasIdStr) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--warning);">Sila pilih kelas untuk melihat sejarah kehadiran tahun ${tahun}.</td></tr>`; return; } const kelasId = parseInt(kelasIdStr); let muridTerlibat = []; db.murid.forEach(m => { let beradaDiKelasIni = false; if(m.sejarahKelas) { const rekodSejarah = m.sejarahKelas.find(sk => sk.tahun === tahun); if(rekodSejarah && rekodSejarah.kelasId === kelasId) beradaDiKelasIni = true; } else { if(tahun === getCurrentYear() && m.kelasId === kelasId) beradaDiKelasIni = true; } if(beradaDiKelasIni) muridTerlibat.push(m); }); if(muridTerlibat.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Tiada rekod murid untuk kelas ini pada tahun ${tahun}.</td></tr>`; return; } if(tarikhSpesifik) { if(!tarikhSpesifik.startsWith(tahun)) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--danger);">Tarikh yang dipilih berada di luar tahun ${tahun}. Kosong.</td></tr>`; return; } muridTerlibat.forEach(m => { let r = m.kehadiran.find(x => x.tarikh === tarikhSpesifik); let stH = r && r.status==='Hadir' ? 1 : 0; let stL = r && r.status==='Lewat' ? 1 : 0; let stTH = !r ? 1 : 0; const returnPage = role === 'host' ? 'page-dashboard-host' : 'page-dashboard-guru'; tbody.innerHTML += `<tr><td><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, '${returnPage}')">${m.nama}</span></td><td>${m.ic}</td><td style="color:var(--success); font-weight:bold;">${stH}</td><td style="color:var(--warning); font-weight:bold;">${stL}</td><td style="color:var(--danger); font-weight:bold;">${stTH}</td></tr>`; }); } else { muridTerlibat.forEach(m => { let h=0, l=0; m.kehadiran.forEach(r => { if(r.tarikh.startsWith(tahun)) { if(r.status === 'Lewat') l++; else h++; } }); let th = db.hariOperasi - (h+l); if(th < 0) th = 0; const returnPage = role === 'host' ? 'page-dashboard-host' : 'page-dashboard-guru'; tbody.innerHTML += `<tr><td><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, '${returnPage}')">${m.nama}</span></td><td>${m.ic}</td><td style="color:var(--success); font-weight:bold;">${h} Hari</td><td style="color:var(--warning); font-weight:bold;">${l} Hari</td><td style="color:var(--danger); font-weight:bold;">${th} Hari</td></tr>`; }); } }
 
-            // Cek Cuti
-            if(db.cuti.find(c => c.tarikh === dateStr)) return alert("Hari ini CUTI. Scan ditutup.");
-            // Cek Waktu
-            if(timeStr < db.tetapanWaktu.buka) return alert("Belum Buka! Buka jam " + db.tetapanWaktu.buka);
-            if(timeStr > db.tetapanWaktu.tutup) return alert("Dah Tutup! Tutup jam " + db.tetapanWaktu.tutup);
+        function paparKelasDetail(kId, date, returnPage) { window.lastReturnPageKelas = returnPage; currentClassDetailId = kId; document.getElementById('hkd-date-picker').value = date; const k = db.kelas.find(x=>x.id===kId), g = db.gurus.find(x=>x.id===k.guruId), mk = db.murid.filter(m=>m.kelasId===kId); document.getElementById('hkd-nama-kelas').innerText = k.name; document.getElementById('hkd-nama-guru').innerText = g?g.name:'-'; document.getElementById('hkd-tarikh').innerText = date; let h=0, l=0, th=0; let sH='', sL='', sTH='', sSemua=''; mk.forEach(m => { sSemua += `<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-host-class-detail')">${m.nama}</span></li>`; const r = m.kehadiran.find(x=>x.tarikh===date); if(r) { if(r.status==='Lewat'){ l++; sL+=`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-host-class-detail')">${m.nama}</span></li>`; } else { h++; sH+=`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-host-class-detail')">${m.nama}</span></li>`; } } else { th++; sTH+=`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-host-class-detail')">${m.nama}</span></li>`; } }); document.getElementById('hkd-nisbah').innerText = `${h+l}/${mk.length}`; document.getElementById('hkd-list-hadir').innerHTML = sH||'Tiada'; document.getElementById('hkd-list-lewat').innerHTML = sL||'Tiada'; document.getElementById('hkd-list-takhadir').innerHTML = sTH||'Tiada'; document.getElementById('hkd-list-semua').innerHTML = sSemua||'Tiada murid.'; if(charts.hostKelas) charts.hostKelas.destroy(); charts.hostKelas = new Chart(document.getElementById('hostKelasChart').getContext('2d'), { type:'bar', data:{labels:['Hadir','Lewat','Tak Hadir'], datasets:[{data:[h,l,th], backgroundColor:['#22c55e','#f59e0b','#ef4444']}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{color:'#fff',stepSize:1}}, x:{ticks:{color:'#fff'}}}}}); showPage('page-host-class-detail'); }
 
-            let m = db.murid.find(x => x.uid === uid);
-            if(m) {
-                let stat = (timeStr > db.tetapanWaktu.lewat) ? "Lewat" : "Hadir";
-                if(!m.kehadiran.find(k => k.tarikh === dateStr)) {
-                    m.kehadiran.push({ tarikh: dateStr, status: stat, masa: timeStr });
-                }
-                document.getElementById('scan-name').innerText = m.nama;
-                document.getElementById('scan-status-text').innerText = stat;
-                document.getElementById('scan-status-text').style.color = (stat === "Hadir") ? "var(--success)" : "var(--warning)";
-                document.getElementById('scan-result').classList.remove('hidden');
-                setTimeout(() => document.getElementById('scan-result').classList.add('hidden'), 2000);
-            } else {
-                alert("Kad Tidak Dikenali");
-            }
-        }
+        function paparPelajarDetail(mId, returnPage) { window.lastReturnPage = returnPage; document.getElementById('btn-kembali-murid').onclick = function() { showPage(returnPage); }; const m = db.murid.find(x => x.id === mId), k = db.kelas.find(x => x.id === m.kelasId); const isHost = !currentUser; const isOwnClass = currentUser && k && k.guruId === currentUser.id; const btnEdit = document.getElementById('btn-edit-kehadiran-detail'); if (isHost || isOwnClass) { btnEdit.classList.remove('hidden'); btnEdit.onclick = function() { bukaOverride(mId); }; } else { btnEdit.classList.add('hidden'); } document.getElementById('indv-nama').innerText = m.nama; document.getElementById('indv-ic').innerText = m.ic; document.getElementById('indv-kelas').innerText = k ? k.name : '-'; let h=0, l=0; m.kehadiran.forEach(r=>{ if(r.status==='Lewat')l++; else h++; }); let th = db.hariOperasi - (h+l); if(th<0) th=0; document.getElementById('indv-count-hadir').innerText = h; document.getElementById('indv-count-lewat').innerText = l; document.getElementById('indv-count-takhadir').innerText = th; if(charts.hostStudent) charts.hostStudent.destroy(); charts.hostStudent = new Chart(document.getElementById('hostStudentChart').getContext('2d'), { type:'pie', data:{labels:['Hadir','Lewat','Tak Hadir'], datasets:[{data:[h,l,th], backgroundColor:['#22c55e','#f59e0b','#ef4444']}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#fff'}}}}}); const rekodDisusun = [...m.kehadiran].sort((a,b) => new Date(b.tarikh) - new Date(a.tarikh)); const tb = document.querySelector('#indv-table tbody'); tb.innerHTML=''; rekodDisusun.forEach(r => { let clr = r.status==='Lewat'?'var(--warning)':'var(--success)'; tb.innerHTML+=`<tr><td>${r.tarikh}</td><td style="color:${clr}; font-weight:bold;">${r.status}</td><td>${r.masa}</td></tr>`; }); showPage('page-host-student-detail'); }
 
-        // --- HOST & GURU LOGIC ---
-        function renderTetapan() {
-            document.getElementById('t-buka').value = db.tetapanWaktu.buka;
-            document.getElementById('t-lewat').value = db.tetapanWaktu.lewat;
-            document.getElementById('t-tutup').value = db.tetapanWaktu.tutup;
-            let list = document.getElementById('list-cuti');
-            list.innerHTML = db.cuti.map(c => `<li>${c.tarikh} - ${c.nama}</li>`).join('');
-        }
-
-        function simpanWaktu() {
-            db.tetapanWaktu.buka = document.getElementById('t-buka').value;
-            db.tetapanWaktu.lewat = document.getElementById('t-lewat').value;
-            db.tetapanWaktu.tutup = document.getElementById('t-tutup').value;
-            alert("Masa Disimpan");
-        }
-
-        function tambahCuti() {
-            let d = document.getElementById('c-date').value;
-            let n = document.getElementById('c-nama').value;
-            if(d && n) { db.cuti.push({tarikh: d, nama: n}); renderTetapan(); }
-        }
-
-        function renderGuruKehadiranKelasSaya() {
-            let container = document.getElementById('pg-myclass-container');
-            let date = document.getElementById('guru-myclass-date').value || new Date().toISOString().split('T')[0];
-            document.getElementById('guru-myclass-date').value = date;
-
-            let myKelas = db.kelas.find(k => k.guruId === currentUser.id);
-            if(!myKelas) return container.innerHTML = "Tiada kelas.";
-
-            let html = `<table><tr><th>Nama</th><th>Status</th><th>Aksi</th></tr>`;
-            db.murid.filter(m => m.kelasId === myKelas.id).forEach(m => {
-                let r = m.kehadiran.find(k => k.tarikh === date);
-                let stat = r ? r.status : "Tak Hadir";
-                html += `<tr><td>${m.nama}</td><td>${stat}</td><td><button class="btn btn-warning" onclick="bukaOvr(${m.id})">Edit</button></td></tr>`;
-            });
-            container.innerHTML = html + `</table>`;
-        }
-
-        function bukaOvr(id) {
-            document.getElementById('ovr-id').value = id;
-            document.getElementById('modal-override').classList.remove('hidden');
-        }
-
-        function simpanOverride() {
-            let id = parseInt(document.getElementById('ovr-id').value);
-            let stat = document.getElementById('ovr-status').value;
-            let date = document.getElementById('guru-myclass-date').value;
-            let m = db.murid.find(x => x.id === id);
+        // --- HOST TETAPAN FUNGSI BARU ---
+        function renderTetapan() { 
+            // 1. Render Hari Operasi
+            document.getElementById('tetapan-hari').value = db.hariOperasi; 
             
-            let idx = m.kehadiran.findIndex(k => k.tarikh === date);
-            if(stat === "Tak Hadir") {
-                if(idx > -1) m.kehadiran.splice(idx, 1);
-            } else {
-                if(idx > -1) m.kehadiran[idx].status = stat;
-                else m.kehadiran.push({ tarikh: date, status: stat, masa: "--:--" });
-            }
-            document.getElementById('modal-override').classList.add('hidden');
-            renderGuruKehadiranKelasSaya();
+            // 2. Render Tetapan Waktu
+            document.getElementById('tetapan-waktu-buka').value = db.tetapanWaktu.buka;
+            document.getElementById('tetapan-waktu-lewat').value = db.tetapanWaktu.lewat;
+            document.getElementById('tetapan-waktu-tutup').value = db.tetapanWaktu.tutup;
+
+            // 3. Render Senarai Cuti
+            const ui = document.getElementById('senarai-cuti-ui'); 
+            ui.innerHTML = ''; 
+            db.cuti.forEach(c => { 
+                ui.innerHTML += `<li style="margin-bottom:8px;">${c.tarikh} - ${c.nama} <button class="btn btn-danger no-print" style="padding: 2px 5px; font-size:0.8rem; margin-left:10px;" onclick="buangCuti(${c.id})"><i class="fas fa-times"></i></button></li>`; 
+            }); 
         }
+
+        function simpanHariOperasi() { db.hariOperasi = parseInt(document.getElementById('tetapan-hari').value) || 0; alert("Jumlah hari operasi disimpan!"); }
+        
+        // NEW: Fungsi Simpan Tetapan Waktu
+        function simpanWaktuOperasi() {
+            db.tetapanWaktu.buka = document.getElementById('tetapan-waktu-buka').value || '06:30';
+            db.tetapanWaktu.lewat = document.getElementById('tetapan-waktu-lewat').value || '07:30';
+            db.tetapanWaktu.tutup = document.getElementById('tetapan-waktu-tutup').value || '14:00';
+            alert("Tetapan masa kehadiran telah dikemaskini!");
+        }
+
+        function tambahCuti() { const d = document.getElementById('tambah-cuti-date').value, n = document.getElementById('tambah-cuti-nama').value; if(d && n) { db.cuti.push({id: Date.now(), tarikh: d, nama: n}); document.getElementById('tambah-cuti-nama').value=''; renderTetapan(); } }
+        function buangCuti(id) { db.cuti = db.cuti.filter(c => c.id !== id); renderTetapan(); }
+        
+        function renderHostStatistik() { const date = document.getElementById('host-overall-date').value || getLocalSystemDate(); let h=0, l=0, th=0; let lstH=[], lstL=[], lstTH=[]; db.murid.forEach(m => { const r = m.kehadiran.find(x => x.tarikh === date); if(r) { if(r.status === 'Lewat') { l++; lstL.push(`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-host')">${m.nama}</span></li>`); } else { h++; lstH.push(`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-host')">${m.nama}</span></li>`); } } else { th++; lstTH.push(`<li><span class="clickable-text" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-host')">${m.nama}</span></li>`); } }); if(charts.hostOverall) charts.hostOverall.destroy(); charts.hostOverall = new Chart(document.getElementById('hostOverallChart').getContext('2d'), { type:'bar', data:{labels:['Hadir','Lewat','Tak Hadir'], datasets:[{data:[h,l,th], backgroundColor:['#22c55e','#f59e0b','#ef4444']}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{color:'#fff',stepSize:1}}, x:{ticks:{color:'#fff'}}}}}); document.getElementById('host-list-hadir').innerHTML = lstH.join('') || 'Tiada'; document.getElementById('host-list-lewat').innerHTML = lstL.join('') || 'Tiada'; document.getElementById('host-list-takhadir').innerHTML = lstTH.join('') || 'Tiada'; }
+        
+        function renderHostKelasStats() { const container = document.getElementById('host-kelas-grid'); container.innerHTML = ''; const date = document.getElementById('host-kelas-date').value || getLocalSystemDate(); db.kelas.forEach(k => { const mk = db.murid.filter(m => m.kelasId === k.id); let h=0; mk.forEach(m => { if(m.kehadiran.some(r=>r.tarikh===date)) h++; }); const prct = mk.length===0?0:Math.round((h/mk.length)*100); container.innerHTML += `<div class="card clickable-row" style="text-align:center; border: 1px solid var(--primary);" onclick="paparKelasDetail(${k.id}, '${date}', 'page-dashboard-host')"><h2 style="color:var(--primary);">${k.name}</h2><div style="font-size:2rem; font-weight:bold; margin: 10px 0;">${prct}%</div><p>Hadir: ${h}/${mk.length}</p></div>`; }); }
+        function tukarTarikhKelasDetail() { if(currentClassDetailId) { paparKelasDetail(currentClassDetailId, document.getElementById('hkd-date-picker').value, window.lastReturnPageKelas); } }
+        function renderDataMurid() { const selectKelas = document.getElementById('carian-kelas'); selectKelas.innerHTML = '<option value="">Semua Kelas</option>'; db.kelas.forEach(k => { selectKelas.innerHTML += `<option value="${k.id}">${k.name}</option>`; }); carianMuridLaksana(); }
+        function carianMuridLaksana() { const teksCarian = document.getElementById('carian-nama').value.toLowerCase(); const idKelas = document.getElementById('carian-kelas').value; const jadual = document.querySelector('#jadual-carian-murid tbody'); jadual.innerHTML = ''; let hasilCarian = db.murid.filter(m => { let padanNamaIC = m.nama.toLowerCase().includes(teksCarian) || m.ic.includes(teksCarian); let padanKelas = idKelas === "" ? true : (m.kelasId.toString() === idKelas); return padanNamaIC && padanKelas; }); if (hasilCarian.length === 0) { jadual.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tiada rekod.</td></tr>'; return; } hasilCarian.forEach(m => { const k = db.kelas.find(x => x.id === m.kelasId); jadual.innerHTML += `<tr class="clickable-row"><td>${m.nama}</td><td>${m.ic}</td><td>${k?k.name:'-'}</td><td class="no-print"><button class="btn btn-primary" onclick="paparPelajarDetail(${m.id}, 'page-dashboard-host')"><i class="fas fa-chart-pie"></i> Profil</button></td></tr>`; }); }
+        function renderHostGuru() { const tb = document.querySelector('#host-table-guru tbody'); tb.innerHTML=''; db.gurus.forEach(g => tb.innerHTML+=`<tr class="clickable-row" onclick="bukaPenuhGuruHost(${g.id})"><td><i class="fas fa-user-circle"></i> ${g.name}</td><td>${g.phone}</td><td>${g.email}</td><td class="no-print"><button class="btn btn-primary no-print">Profil</button></td></tr>`); }
+        function tambahGuruHost() { const n=document.getElementById('add-g-name').value, e=document.getElementById('add-g-email').value, p=document.getElementById('add-g-phone').value, pw=document.getElementById('add-g-pass').value; if(n&&e) { db.gurus.push({id:Date.now(), name:n, email:e, phone:p, pass:pw}); renderHostGuru(); alert('Guru ditambah!'); } }
+        function bukaPenuhGuruHost(id) { const g = db.gurus.find(x=>x.id===id); document.getElementById('det-g-id').value = g.id; document.getElementById('det-g-name').value = g.name; document.getElementById('det-g-phone').value = g.phone; document.getElementById('det-g-email').value = g.email; document.getElementById('det-g-pass').value = g.pass; renderKelasBawahGuru(id); showPage('page-host-teacher-detail'); }
+        function simpanEditGuru() { const id = parseInt(document.getElementById('det-g-id').value), g = db.gurus.find(x=>x.id===id); g.name=document.getElementById('det-g-name').value; g.phone=document.getElementById('det-g-phone').value; g.email=document.getElementById('det-g-email').value; g.pass=document.getElementById('det-g-pass').value; alert('Dikemaskini!'); }
+        function buangGuru() { const id = parseInt(document.getElementById('det-g-id').value); if(confirm('Buang guru ini?')) { db.gurus = db.gurus.filter(x=>x.id!==id); db.kelas = db.kelas.filter(x=>x.guruId!==id); kembaliKeHostMenu('guru'); } }
+        function tambahKelasHost() { const id = parseInt(document.getElementById('det-g-id').value), n = document.getElementById('add-k-name').value; if(n) { db.kelas.push({id:Date.now(), name:n, guruId:id}); document.getElementById('add-k-name').value=''; renderKelasBawahGuru(id); } }
+        function buangKelasHost(kId) { if(confirm('Buang kelas?')) { db.kelas = db.kelas.filter(x=>x.id!==kId); renderKelasBawahGuru(parseInt(document.getElementById('det-g-id').value)); } }
+        function renderKelasBawahGuru(guruId) { const c = document.getElementById('det-g-kelas-container'); c.innerHTML=''; db.kelas.filter(k=>k.guruId===guruId).forEach(k => { let html = `<div class="sub-card"><div style="display:flex; justify-content:space-between;"><h4>${k.name}</h4><button class="btn btn-danger no-print" onclick="buangKelasHost(${k.id})"><i class="fas fa-trash"></i></button></div><div class="no-print" style="margin:10px 0; background:#0f172a; padding:10px;"><input type="text" id="add-m-n-${k.id}" class="inline-input" placeholder="Nama"><input type="text" id="add-m-ic-${k.id}" class="inline-input" placeholder="IC"><input type="text" id="add-m-u-${k.id}" class="inline-input" placeholder="UID"><button class="btn btn-success" onclick="tambahMuridHost(${k.id})">Tambah Murid</button></div><table><thead><tr><th>Nama</th><th>IC</th><th>UID</th><th class="no-print">Tindakan</th></tr></thead><tbody>`; db.murid.filter(m=>m.kelasId===k.id).forEach(m => { html += `<tr><td><input type="text" id="em-n-${m.id}" value="${m.nama}"></td><td><input type="text" id="em-ic-${m.id}" value="${m.ic}"></td><td><input type="text" id="em-u-${m.id}" value="${m.uid}"></td><td class="no-print"><button class="btn btn-success" onclick="simpanMuridHost(${m.id})"><i class="fas fa-save"></i></button> <button class="btn btn-warning" onclick="bukaOverride(${m.id})">Edit</button> <button class="btn btn-danger" onclick="buangMuridHost(${m.id})"><i class="fas fa-trash"></i></button></td></tr>`; }); c.innerHTML += html + `</tbody></table></div>`; }); }
+        function tambahMuridHost(kId) { const n=document.getElementById(`add-m-n-${kId}`).value, ic=document.getElementById(`add-m-ic-${kId}`).value, u=document.getElementById(`add-m-u-${kId}`).value; if(n) { db.murid.push({id:Date.now(), nama:n, ic:ic, uid:u, kelasId:kId, sejarahKelas:[{tahun:getCurrentYear(), kelasId:kId}], kehadiran:[]}); renderKelasBawahGuru(parseInt(document.getElementById('det-g-id').value)); } }
+        function simpanMuridHost(mId) { const m=db.murid.find(x=>x.id===mId); m.nama=document.getElementById(`em-n-${mId}`).value; m.ic=document.getElementById(`em-ic-${mId}`).value; m.uid=document.getElementById(`em-u-${mId}`).value; alert('Disimpan!'); }
+        function buangMuridHost(mId) { if(confirm('Buang murid?')) { db.murid=db.murid.filter(x=>x.id!==mId); renderKelasBawahGuru(parseInt(document.getElementById('det-g-id').value)); } }
+
+        function startScanMode() { showPage('page-scan'); const today = getLocalSystemDate(); const cutiHariIni = db.cuti.find(c => c.tarikh === today); const rfidInput = document.getElementById('rfid-listener'); if(cutiHariIni) { rfidInput.classList.add('hidden'); document.getElementById('scan-buka-icon').classList.add('hidden'); document.getElementById('scan-title').classList.add('hidden'); document.getElementById('scan-result').classList.add('hidden'); document.getElementById('scan-sub').classList.add('hidden'); const scanTutupMsg = document.getElementById('scan-tutup-msg'); scanTutupMsg.innerHTML = `<i class="fas fa-calendar-times" style="font-size: 5rem; color: var(--danger); margin-bottom: 20px;"></i><h2 style="color: var(--danger);">MAAF, RFID DITUTUP</h2><h3 style="margin-top:10px; color: var(--warning);">BAGI CUTI: ${cutiHariIni.nama.toUpperCase()}</h3>`; scanTutupMsg.classList.remove('hidden'); } else { rfidInput.classList.remove('hidden'); document.getElementById('scan-buka-icon').classList.remove('hidden'); document.getElementById('scan-title').classList.remove('hidden'); document.getElementById('scan-sub').classList.remove('hidden'); document.getElementById('scan-tutup-msg').classList.add('hidden'); rfidInput.value = ''; setTimeout(() => rfidInput.focus(), 100); document.getElementById('page-scan').onclick = function() { rfidInput.focus(); }; } }
+        function handleScanInput(e) { if(e.key==='Enter' && e.target.value.trim()){ processRFID(e.target.value); } }
+        
+        // NEW UPDATE: LOGIK IMBASAN RFID BERGANTUNG PADA TETAPAN MASA HOST
+        function processRFID(uid) { 
+            const today = getLocalSystemDate(); 
+            const rfidInput = document.getElementById('rfid-listener'); 
+            
+            // Semak cuti
+            if(db.cuti.find(c => c.tarikh === today)) { 
+                alert("Sistem ditutup untuk hari cuti."); 
+                rfidInput.value = ''; rfidInput.focus(); return; 
+            } 
+            
+            // Dapatkan masa semasa (HH:MM)
+            const now = new Date(); 
+            const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            
+            // Semak Waktu Buka
+            if (currentTime < db.tetapanWaktu.buka) {
+                alert("Sistem kehadiran belum dibuka. Waktu buka: " + db.tetapanWaktu.buka);
+                rfidInput.value = ''; rfidInput.focus(); return;
+            }
+
+            // Semak Waktu Tutup
+            if (currentTime > db.tetapanWaktu.tutup) {
+                alert("Sistem kehadiran telah ditutup pada: " + db.tetapanWaktu.tutup);
+                rfidInput.value = ''; rfidInput.focus(); return;
+            }
+
+            // Tentukan status Hadir atau Lewat berdasarkan Masa Lewat
+            let stat = (currentTime > db.tetapanWaktu.lewat) ? 'Lewat' : 'Hadir';
+
+            rfidInput.value = ''; setTimeout(() => rfidInput.focus(), 50); 
+            const cleanUID = uid.trim().toUpperCase(); 
+            const m = db.murid.find(x => x.uid.toUpperCase() === cleanUID); 
+            
+            if(m) { 
+                let r = m.kehadiran.find(x => x.tarikh === today); 
+                if(!r) { 
+                    m.kehadiran.push({tarikh: today, status: stat, masa: getLocalSystemTime()}); 
+                } else { 
+                    stat = r.status; // Jika dah scan, papar status asal dia
+                } 
+                document.getElementById('scan-name').innerText = m.nama; 
+                document.getElementById('scan-status-text').innerText = stat; 
+                document.getElementById('scan-status-text').style.color = stat === 'Lewat' ? 'var(--warning)' : 'var(--success)'; 
+                document.getElementById('scan-result').classList.remove('hidden'); 
+                setTimeout(() => document.getElementById('scan-result').classList.add('hidden'), 3000); 
+            } else { 
+                alert("Kad Tidak Dikenali! Sila daftarkan UID kad ini terlebih dahulu."); 
+            } 
+        }
+
+        function bukaOverride(mId) { const m = db.murid.find(x=>x.id===mId); document.getElementById('ovr-nama').innerText = m.nama; document.getElementById('ovr-id').value = mId; document.getElementById('ovr-date').value = getLocalSystemDate(); document.getElementById('modal-override').classList.remove('hidden'); }
+        function simpanOverride() { const id = parseInt(document.getElementById('ovr-id').value); const tarikh = document.getElementById('ovr-date').value; const stat = document.getElementById('ovr-status').value; const masa = document.getElementById('ovr-time').value + ':00'; const m = db.murid.find(x=>x.id===id); const idx = m.kehadiran.findIndex(r=>r.tarikh===tarikh); if(stat === 'Tak Hadir') { if(idx > -1) m.kehadiran.splice(idx,1); } else { if(idx > -1) { m.kehadiran[idx].status=stat; m.kehadiran[idx].masa=masa; } else { m.kehadiran.push({tarikh:tarikh, status:stat, masa:masa}); } } alert('Status kehadiran disunting!'); document.getElementById('modal-override').classList.add('hidden'); if (!document.getElementById('page-host-student-detail').classList.contains('hidden')) { paparPelajarDetail(id, window.lastReturnPage); } if(!document.getElementById('menu-guru-uruskehadiran').classList.contains('hidden')) { renderGuruKehadiranKelasSaya(); } }
     </script>
 </body>
 </html>
