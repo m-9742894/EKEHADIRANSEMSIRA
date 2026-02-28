@@ -1,150 +1,44 @@
-// --- 1. KONFIGURASI UTAMA ---
-const URL_API = "https://script.google.com/macros/s/AKfycbwyOa1OfrMdU9GC__OyV2x_pI4OX0sgdShxGDsPNWGE1eNd73HuU-YPb8w7RnvFf7g/exec";
+const URL_API = "https://script.googleusercontent.com/a/macros/moe-dl.edu.my/echo?user_content_key=AY5xjrQkvlArf3WtSXbv-tmwXPMWBxPDqN0qL4DbxKXgTizpb4kmNzC3RI5BG-aT5VFQ9S8XZJRR79gUpBH0h9qwCiF4MPx7hpDfJwcMqpNoqq6yQ6jZ3Uf4WohfIxQyUK2JYDuMgGFtKKXobZky86WtHSmzrvAN6aU7MJEJP70Uhq8wQW7_rUi8-nGyt_B06Ov53QHX5OSSKg8Mtj2DU8wo9ZsC7AnjecPnEjTxx6UZygvf0hnLQUehUC_Y6ZGRyIcUdJUosIk-CYqxyROvzki1-5ASXU3JVc0H_LKA_oiLmeLoqsGSJdc&lib=MATy-uD7Uf6H5dwa-YPeFMHXm7oHYQnAr";
+let senaraiGuru = [];
+let senaraiMurid = [];
 
-let senaraiGuruCloud = [];
-let dbMuridCloud = [];
+// Tarik data sebaik web dibuka
+fetch(URL_API).then(r => r.json()).then(d => {
+    senaraiGuru = d.guru;
+    senaraiMurid = d.murid;
+    console.log("Data Berjaya Tarik!");
+});
 
-// --- 2. FUNGSI SYNC DATA (TARIK DARI SHEETS) ---
-function syncSemuaData() {
-    console.log("Sedang menarik data dari Google Sheets...");
-    fetch(URL_API)
-        .then(response => response.json())
-        .then(data => {
-            senaraiGuruCloud = data.guru;
-            dbMuridCloud = data.murid;
-            console.log("Data Guru & Murid Berjaya Disinkronkan!");
-        })
-        .catch(err => console.error("Ralat Sinkronisasi:", err));
-}
-
-// Jalankan sync setiap kali website dibuka
-syncSemuaData();
-
-// --- 3. FUNGSI LOG MASUK (GURU & HOST) ---
-function login(role) {
-    if(role === 'host') {
-        let email = document.getElementById('login-host-email').value;
-        let pass = document.getElementById('login-host-pass').value;
-        // Password Host Tetap
-        if(email === "hostsemsira@gmail.com" && pass === "Semsira1969") {
-            setupNav('host'); showPage('page-dashboard-host'); switchMenu('tetapan', 'host');
-        } else alert("Akses Host Ditolak!");
-    } else {
-        let email = document.getElementById('login-guru-email').value;
-        let pass = document.getElementById('login-guru-pass').value;
-        
-        // Cari guru dalam data yang ditarik dari Sheets
-        let g = senaraiGuruCloud.find(x => x.email === email && String(x.pass) === String(pass));
-        
-        if(g) {
-            currentUser = g; 
-            document.getElementById('guru-name-display').innerText = g.name;
-            setupNav('guru'); showPage('page-dashboard-guru'); switchMenu('uruskehadiran', 'guru');
-        } else {
-            alert("E-mel atau Kata Laluan Salah! Jika anda baru daftar, sila refresh website dalam 10 saat.");
-        }
-    }
-}
-
-// --- 4. FUNGSI DAFTAR GURU (SIMPAN KE TAB GURU) ---
 function registerGuru() {
     let n = document.getElementById('reg-name').value;
-    let t = document.getElementById('reg-tel').value; 
     let e = document.getElementById('reg-email').value;
     let p = document.getElementById('reg-pass').value;
+    let t = document.getElementById('reg-tel').value;
 
-    if(n && e && p) {
-        const dataGuru = {
-            jenis: "guru",
-            nama: n,
-            notel: t,
-            email: e,
-            password: p
-        };
-
-        fetch(URL_API, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(dataGuru)
-        }).then(() => {
-            alert("Pendaftaran Berjaya! Sila tunggu 10 saat sebelum Log Masuk.");
-            setTimeout(syncSemuaData, 5000); // Tarik data baru selepas 5 saat
-            showPage('page-login-guru');
-        });
-    } else {
-        alert("Sila lengkapkan semua maklumat!");
-    }
+    fetch(URL_API, {
+        method: 'POST',
+        body: JSON.stringify({jenis:"guru", nama:n, email:e, password:p, notel:t})
+    }).then(() => {
+        alert("Pendaftaran Masuk Ke Sheets!");
+        location.reload(); // Refresh untuk tarik data baru
+    });
 }
 
-// --- 5. FUNGSI IMBAS RFID (SIMPAN KE TAB SHEET1) ---
 function processRFID(uid) {
-    const today = getLocalSystemDate();
-    const rfidInput = document.getElementById('rfid-listener');
-    
-    // Reset input rfid dengan cepat
-    rfidInput.value = ''; 
-    setTimeout(() => rfidInput.focus(), 50);
-
-    const now = new Date();
-    const h = now.getHours();
-    const min = now.getMinutes();
-    
-    // Logik Hadir/Lewat (Contoh: Lewat selepas 7:40 AM)
-    let stat = (h > 7 || (h === 7 && min > 40)) ? 'Lewat' : 'Hadir'; 
-    const cleanUID = uid.trim().toUpperCase();
-
-    // Cari murid dalam data yang ditarik dari tab 'Murid' di Sheets
-    const m = dbMuridCloud.find(x => x.uid.toUpperCase() === cleanUID);
-    
+    let m = senaraiMurid.find(x => x.uid.toUpperCase() === uid.trim().toUpperCase());
     if(m) {
-        let masaSekarang = getLocalSystemTime();
-
-        // Sediakan data untuk dihantar ke Tab Sheet1
-        const dataKeSheets = {
+        let d = {
             jenis: "kehadiran",
-            tarikh: today,
+            tarikh: new Date().toLocaleDateString(),
             nama: m.nama,
-            status: stat,
-            masa: masaSekarang,
-            uid: cleanUID,
-            ic: m.ic // Data IC dari Sheets
+            status: "Hadir",
+            masa: new Date().toLocaleTimeString(),
+            uid: uid,
+            ic: m.ic
         };
-
-        // Hantar ke Google Sheets (Tab Sheet1)
-        fetch(URL_API, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(dataKeSheets)
-        });
-
-        // Paparan Keputusan pada Skrin
-        document.getElementById('scan-name').innerText = m.nama; 
-        document.getElementById('scan-status-text').innerText = stat; 
-        document.getElementById('scan-status-text').style.color = stat === 'Lewat' ? 'orange' : 'green';
-        document.getElementById('scan-result').classList.remove('hidden'); 
-        
-        // Sembunyikan result selepas 3 saat
-        setTimeout(() => document.getElementById('scan-result').classList.add('hidden'), 3000);
-        
+        fetch(URL_API, { method: 'POST', body: JSON.stringify(d) });
+        alert("Hadir: " + m.nama);
     } else {
-        alert("Kad (UID: " + cleanUID + ") Tidak Dikenali! Sila daftar di tab Murid Google Sheets.");
+        alert("Murid Tiada Dalam Sheets!");
     }
-}
-
-// --- FUNGSI START SCAN ---
-function startScanMode() { 
-    showPage('page-scan'); 
-    const rfidInput = document.getElementById('rfid-listener');
-    rfidInput.value = '';
-    setTimeout(() => rfidInput.focus(), 100); 
-    
-    document.getElementById('page-scan').onclick = function() {
-        rfidInput.focus();
-    };
-}
-
-function handleScanInput(e) { 
-    if(e.key === 'Enter' && e.target.value.trim()){ 
-        processRFID(e.target.value); 
-    } 
 }
