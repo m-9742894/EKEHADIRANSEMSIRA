@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEM KEHADIRAN MURID SEMSIRA</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { 
+            --bg-color: #0f172a; 
+            --panel-bg: #1e293b; 
+            --primary: #0ea5e9; 
+            --success: #22c55e; 
+            --danger: #ef4444; 
+            --warning: #f59e0b; 
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8; 
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        .hidden { display: none !important; }
+        
+        /* Navigation */
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); flex-wrap: wrap; gap: 10px;}
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 1px; }
+        .nav-links button { background: none; border: none; color: var(--text-main); margin-left: 15px; cursor: pointer; font-size: 1rem; padding: 5px; }
+        .nav-links button:hover { color: var(--primary); }
+        
+        /* Layout Containers */
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .sub-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px; }
+        
+        /* Buttons & Inputs */
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button.btn:hover { background: #0284c7; }
+        button.btn-danger { background: var(--danger); }
+        button.btn-success { background: var(--success); }
+        button.btn-warning { background: var(--warning); color: #000; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
+        
+        /* Grid System */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: var(--primary); }
+        .clickable-row:hover { background: rgba(14, 165, 233, 0.1); cursor: pointer; }
+        .clickable-text { color: var(--primary); cursor: pointer; text-decoration: underline; font-weight: bold; }
+
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index: 1000; }
+
+        @media print {
+            nav, .btn, .no-print, input { display: none !important; }
+            body { background: white; color: black; }
+            .card { border: 1px solid #ccc; color: black; background: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="navbar" class="hidden">
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links" id="nav-menus"></div>
+    </nav>
+
+    <div id="page-landing" class="container" style="text-align: center; margin-top: 10vh;">
+        <h1 style="font-size: 2.5rem; color: var(--primary); margin-bottom: 20px;">SISTEM KEHADIRAN MURID SEMSIRA</h1>
+        <p style="color: var(--text-muted); margin-bottom: 40px;">Sistem pengurusan kehadiran pintar berasaskan teknologi RFID.</p>
+        <div class="grid-3">
+            <div class="card">
+                <h3><i class="fas fa-user-tie"></i> Portal Guru</h3>
+                <button class="btn" onclick="showPage('page-login-guru')" style="margin-top:15px; width:100%;">Log Masuk</button>
+                <p style="margin-top:10px;"><a href="#" onclick="showPage('page-signup-guru')" style="color: var(--primary); font-size: 0.9rem;">Daftar Akaun Baru</a></p>
+            </div>
+            <div class="card" style="border: 2px solid var(--success);">
+                <h3 style="color: var(--success);"><i class="fas fa-id-card"></i> Imbasan Pelajar</h3>
+                <button class="btn btn-success" onclick="startScanMode()" style="margin-top:15px; width:100%;">SCAN KEHADIRAN</button>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-server"></i> Portal Host</h3>
+                <button class="btn btn-danger" onclick="showPage('page-login-host')" style="margin-top:15px; width:100%;">Log Masuk Host</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-login-guru" class="container hidden" style="max-width: 400px;">
+        <button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button>
+        <div class="card" style="margin-top:20px;">
+            <h2>Log Masuk Guru</h2>
+            <input type="email" id="login-guru-email" placeholder="E-mel Guru">
+            <input type="password" id="login-guru-pass" placeholder="Kata Laluan">
+            <button class="btn" style="width: 100%;" onclick="login('guru')">Masuk</button>
+        </div>
+    </div>
+
+    <div id="page-signup-guru" class="container hidden" style="max-width: 400px;">
+        <button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button>
+        <div class="card" style="margin-top:20px;">
+            <h2>Daftar Guru Baru</h2>
+            <input type="text" id="reg-name" placeholder="Nama Penuh">
+            <input type="email" id="reg-email" placeholder="E-mel">
+            <input type="password" id="reg-pass" placeholder="Kata Laluan">
+            <button class="btn" style="width: 100%;" onclick="registerGuru()">Daftar</button>
+        </div>
+    </div>
+
+    <div id="page-login-host" class="container hidden" style="max-width: 400px;">
+        <button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button>
+        <div class="card" style="margin-top:20px;">
+            <h2 style="color: var(--danger);">Log Masuk Host</h2>
+            <input type="email" id="login-host-email" placeholder="E-mel Host">
+            <input type="password" id="login-host-pass" placeholder="Kata Laluan">
+            <button class="btn btn-danger" style="width: 100%;" onclick="login('host')">Masuk</button>
+        </div>
+    </div>
+
+    <div id="page-scan" class="container hidden">
+        <button class="btn no-print" onclick="showPage('page-landing')"><i class="fas fa-arrow-left"></i> Kembali</button>
+        <div class="card" style="text-align: center; padding: 50px 20px;">
+            <i id="scan-icon" class="fas fa-wifi" style="font-size: 5rem; color: var(--primary); margin-bottom: 20px;"></i>
+            <h2 id="scan-title">SILA IMBAS KAD RFID</h2>
+            <input type="text" id="rfid-listener" style="width: 50%; text-align: center; font-size: 1.5rem; border: 2px solid var(--primary);" placeholder="Sedia..." onkeydown="handleScanInput(event)" autocomplete="off">
+            <div id="scan-result" class="hidden" style="margin-top: 20px; padding: 20px; background: #0f172a; border-radius: 10px;">
+                <h2 id="scan-name" style="color:var(--primary);"></h2>
+                <p id="scan-status-text" style="font-weight:bold; font-size:1.5rem;"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-dashboard-guru" class="container hidden">
+        <h2 style="margin-bottom:20px;">Portal Cikgu <span id="guru-name-display" style="color: var(--primary);"></span></h2>
+        
+        <div id="menu-guru-profil" class="menu-section guru-menu">
+            <div class="card">
+                <h3>Profil Anda</h3>
+                <div class="grid-2">
+                    <div><label>Nama:</label><input type="text" id="pg-name"></div>
+                    <div><label>E-mel:</label><input type="email" id="pg-email"></div>
+                </div>
+                <button class="btn btn-success" onclick="simpanProfilGuru()">Simpan</button>
+            </div>
+        </div>
+
+        <div id="menu-guru-uruskehadiran" class="menu-section guru-menu hidden">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>Kehadiran Kelas Saya</h3>
+                    <input type="date" id="guru-myclass-date" style="width:200px;" onchange="renderGuruKehadiranKelasSaya()">
+                </div>
+                <div id="pg-myclass-container" style="margin-top:20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-dashboard-host" class="container hidden">
+        <h2 style="color: var(--danger); margin-bottom:20px;"><i class="fas fa-server"></i> Host Utama</h2>
+        
+        <div id="menu-host-tetapan" class="menu-section host-menu">
+            <div class="card">
+                <h3><i class="fas fa-clock"></i> Tetapan Masa & Cuti</h3>
+                <div class="grid-3" style="margin-top:20px;">
+                    <div class="sub-card">
+                        <label>Waktu Buka Scan:</label>
+                        <input type="time" id="t-buka">
+                        <label>Waktu Mula Lewat:</label>
+                        <input type="time" id="t-lewat">
+                        <label>Waktu Tutup Scan:</label>
+                        <input type="time" id="t-tutup">
+                        <button class="btn btn-warning" style="width:100%; color:black;" onclick="simpanWaktu()">Simpan Waktu</button>
+                    </div>
+                    <div class="sub-card">
+                        <label>Tambah Cuti (RFID Disable):</label>
+                        <input type="date" id="c-date">
+                        <input type="text" id="c-nama" placeholder="Nama Cuti">
+                        <button class="btn btn-primary" style="width:100%;" onclick="tambahCuti()">Tambah Cuti</button>
+                        <ul id="list-cuti" style="margin-top:10px; font-size:0.9rem;"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-override" class="modal-overlay hidden">
+        <div class="card" style="width: 350px;">
+            <h3>Ubah Status</h3>
+            <input type="hidden" id="ovr-id">
+            <select id="ovr-status">
+                <option value="Hadir">Hadir</option>
+                <option value="Lewat">Lewat</option>
+                <option value="Tak Hadir">Tidak Hadir (Padam)</option>
+            </select>
+            <div style="text-align:right;">
+                <button class="btn" onclick="document.getElementById('modal-override').classList.add('hidden')">Batal</button>
+                <button class="btn btn-success" onclick="simpanOverride()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA BASE (MOCKUP) ---
+        let db = {
+            host: { email: 'hostsemsira@gmail.com', pass: 'Semsira1969' },
+            gurus: [{ id: 1, name: 'Cikgu Ahmad', email: 'ahmad@gmail.com', pass: '123' }],
+            kelas: [{ id: 1, name: '5 Sains 1', guruId: 1 }],
+            murid: [
+                { id: 1, nama: 'Ali Abu', ic: '080101', uid: 'A1B2', kelasId: 1, kehadiran: [] },
+                { id: 2, nama: 'Siti Aminah', ic: '080202', uid: 'C3D4', kelasId: 1, kehadiran: [] }
+            ],
+            cuti: [],
+            tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' }
+        };
+
+        let currentUser = null;
+
+        // --- CORE FUNCTIONS ---
+        function showPage(id) {
+            document.querySelectorAll('.container').forEach(p => p.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById('navbar').classList.toggle('hidden', ['page-landing','page-login-guru','page-signup-guru','page-login-host','page-scan'].includes(id));
+        }
+
+        function login(role) {
+            if(role === 'host') {
+                if(document.getElementById('login-host-email').value === db.host.email && document.getElementById('login-host-pass').value === db.host.pass) {
+                    setupNav('host'); showPage('page-dashboard-host'); switchMenu('tetapan', 'host');
+                } else alert("Salah!");
+            } else {
+                let g = db.gurus.find(x => x.email === document.getElementById('login-guru-email').value);
+                if(g && g.pass === document.getElementById('login-guru-pass').value) {
+                    currentUser = g; document.getElementById('guru-name-display').innerText = g.name;
+                    setupNav('guru'); showPage('page-dashboard-guru'); switchMenu('uruskehadiran', 'guru');
+                } else alert("Salah!");
+            }
+        }
+
+        function setupNav(role) {
+            let nav = document.getElementById('nav-menus');
+            if(role === 'host') {
+                nav.innerHTML = `<button onclick="switchMenu('tetapan','host')">Tetapan</button><button onclick="location.reload()">Keluar</button>`;
+            } else {
+                nav.innerHTML = `<button onclick="switchMenu('profil','guru')">Profil</button><button onclick="switchMenu('uruskehadiran','guru')">Kehadiran</button><button onclick="location.reload()">Keluar</button>`;
+            }
+        }
+
+        function switchMenu(menuId, role) {
+            document.querySelectorAll(`.${role}-menu`).forEach(m => m.classList.add('hidden'));
+            document.getElementById(`menu-${role}-${menuId}`).classList.remove('hidden');
+            if(menuId === 'tetapan') renderTetapan();
+            if(menuId === 'uruskehadiran') renderGuruKehadiranKelasSaya();
+        }
+
+        // --- SCANNER LOGIC ---
+        function startScanMode() { 
+            showPage('page-scan'); 
+            setTimeout(() => document.getElementById('rfid-listener').focus(), 500);
+        }
+
+        function handleScanInput(e) { 
+            if(e.key === 'Enter') {
+                let uid = e.target.value.trim().toUpperCase();
+                processRFID(uid);
+                e.target.value = '';
+            }
+        }
+
+        function processRFID(uid) {
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+            const dateStr = now.toISOString().split('T')[0];
+
+            // Cek Cuti
+            if(db.cuti.find(c => c.tarikh === dateStr)) return alert("Hari ini CUTI. Scan ditutup.");
+            // Cek Waktu
+            if(timeStr < db.tetapanWaktu.buka) return alert("Belum Buka! Buka jam " + db.tetapanWaktu.buka);
+            if(timeStr > db.tetapanWaktu.tutup) return alert("Dah Tutup! Tutup jam " + db.tetapanWaktu.tutup);
+
+            let m = db.murid.find(x => x.uid === uid);
+            if(m) {
+                let stat = (timeStr > db.tetapanWaktu.lewat) ? "Lewat" : "Hadir";
+                if(!m.kehadiran.find(k => k.tarikh === dateStr)) {
+                    m.kehadiran.push({ tarikh: dateStr, status: stat, masa: timeStr });
+                }
+                document.getElementById('scan-name').innerText = m.nama;
+                document.getElementById('scan-status-text').innerText = stat;
+                document.getElementById('scan-status-text').style.color = (stat === "Hadir") ? "var(--success)" : "var(--warning)";
+                document.getElementById('scan-result').classList.remove('hidden');
+                setTimeout(() => document.getElementById('scan-result').classList.add('hidden'), 2000);
+            } else {
+                alert("Kad Tidak Dikenali");
+            }
+        }
+
+        // --- HOST & GURU LOGIC ---
+        function renderTetapan() {
+            document.getElementById('t-buka').value = db.tetapanWaktu.buka;
+            document.getElementById('t-lewat').value = db.tetapanWaktu.lewat;
+            document.getElementById('t-tutup').value = db.tetapanWaktu.tutup;
+            let list = document.getElementById('list-cuti');
+            list.innerHTML = db.cuti.map(c => `<li>${c.tarikh} - ${c.nama}</li>`).join('');
+        }
+
+        function simpanWaktu() {
+            db.tetapanWaktu.buka = document.getElementById('t-buka').value;
+            db.tetapanWaktu.lewat = document.getElementById('t-lewat').value;
+            db.tetapanWaktu.tutup = document.getElementById('t-tutup').value;
+            alert("Masa Disimpan");
+        }
+
+        function tambahCuti() {
+            let d = document.getElementById('c-date').value;
+            let n = document.getElementById('c-nama').value;
+            if(d && n) { db.cuti.push({tarikh: d, nama: n}); renderTetapan(); }
+        }
+
+        function renderGuruKehadiranKelasSaya() {
+            let container = document.getElementById('pg-myclass-container');
+            let date = document.getElementById('guru-myclass-date').value || new Date().toISOString().split('T')[0];
+            document.getElementById('guru-myclass-date').value = date;
+
+            let myKelas = db.kelas.find(k => k.guruId === currentUser.id);
+            if(!myKelas) return container.innerHTML = "Tiada kelas.";
+
+            let html = `<table><tr><th>Nama</th><th>Status</th><th>Aksi</th></tr>`;
+            db.murid.filter(m => m.kelasId === myKelas.id).forEach(m => {
+                let r = m.kehadiran.find(k => k.tarikh === date);
+                let stat = r ? r.status : "Tak Hadir";
+                html += `<tr><td>${m.nama}</td><td>${stat}</td><td><button class="btn btn-warning" onclick="bukaOvr(${m.id})">Edit</button></td></tr>`;
+            });
+            container.innerHTML = html + `</table>`;
+        }
+
+        function bukaOvr(id) {
+            document.getElementById('ovr-id').value = id;
+            document.getElementById('modal-override').classList.remove('hidden');
+        }
+
+        function simpanOverride() {
+            let id = parseInt(document.getElementById('ovr-id').value);
+            let stat = document.getElementById('ovr-status').value;
+            let date = document.getElementById('guru-myclass-date').value;
+            let m = db.murid.find(x => x.id === id);
+            
+            let idx = m.kehadiran.findIndex(k => k.tarikh === date);
+            if(stat === "Tak Hadir") {
+                if(idx > -1) m.kehadiran.splice(idx, 1);
+            } else {
+                if(idx > -1) m.kehadiran[idx].status = stat;
+                else m.kehadiran.push({ tarikh: date, status: stat, masa: "--:--" });
+            }
+            document.getElementById('modal-override').classList.add('hidden');
+            renderGuruKehadiranKelasSaya();
+        }
+    </script>
+</body>
+</html>
