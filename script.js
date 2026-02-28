@@ -1,20 +1,86 @@
 // --- KONFIGURASI DATABASE GOOGLE ---
 const URL_API = "https://script.google.com/macros/s/AKfycbwyOa1OfrMdU9GC__OyV2x_pI4OX0sgdShxGDsPNWGE1eNd73HuU-YPb8w7RnvFf7g/exec";
 
-// Fungsi untuk hantar data ke Google Sheets
-function hantarKeGoogleSheets(dataMurid) {
-    fetch(URL_API, {
-        method: 'POST',
-        mode: 'no-cors', // Penting untuk mengelakkan ralat CORS dengan Google Script
-        cache: 'no-cache',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataMurid)
-    })
-    .then(() => console.log("Data berjaya dihantar ke Google Sheets!"))
-    .catch(err => console.error("Ralat penghantaran:", err));
+let senaraiGuruCloud = [];
+
+// 1. Fungsi Tarik Data Guru (Bila web dibuka, dia terus kenal siapa yang dah daftar)
+function syncGuruData() {
+    fetch(URL_API)
+        .then(response => response.json())
+        .then(data => {
+            senaraiGuruCloud = data;
+            console.log("Data Guru Berjaya Disinkronkan!");
+        })
+        .catch(err => console.error("Ralat Sync Guru:", err));
 }
 
-// --- SCANNER UI (DIKEMASKINI) ---
+// Jalankan sync setiap kali web dibuka
+syncGuruData();
+
+// 2. Fungsi Hantar Data (Untuk Kehadiran & Pendaftaran Guru)
+function hantarKeCloud(dataData) {
+    fetch(URL_API, {
+        method: 'POST',
+        mode: 'no-cors', 
+        cache: 'no-cache',
+        body: JSON.stringify(dataData)
+    })
+    .then(() => console.log("Data Berjaya Dihantar ke Cloud!"))
+    .catch(err => console.error("Ralat Cloud:", err));
+}
+
+// --- FUNGSI LOGIN ---
+function login(role) {
+    if(role === 'host') {
+        let email = document.getElementById('login-host-email').value;
+        let pass = document.getElementById('login-host-pass').value;
+        if(email === "hostsemsira@gmail.com" && pass === "Semsira1969") {
+            setupNav('host'); showPage('page-dashboard-host'); switchMenu('tetapan', 'host');
+        } else alert("Akses Host Ditolak!");
+    } else {
+        let email = document.getElementById('login-guru-email').value;
+        let pass = document.getElementById('login-guru-pass').value;
+        
+        // Semak dalam senarai dari Google Sheets
+        let g = senaraiGuruCloud.find(x => x.email === email && String(x.pass) === String(pass));
+        
+        if(g) {
+            currentUser = g; 
+            document.getElementById('guru-name-display').innerText = g.name;
+            setupNav('guru'); showPage('page-dashboard-guru'); switchMenu('uruskehadiran', 'guru');
+        } else {
+            alert("E-mel atau Kata Laluan Salah! Jika baru daftar, tunggu 10 saat dan refresh.");
+            syncGuruData();
+        }
+    }
+}
+
+// --- FUNGSI DAFTAR GURU ---
+function registerGuru() {
+    let n = document.getElementById('reg-name').value;
+    let e = document.getElementById('reg-email').value;
+    let p = document.getElementById('reg-pass').value;
+    let t = document.getElementById('reg-tel').value; 
+
+    if(n && e && p) {
+        const dataGuru = {
+            jenis: "guru",
+            nama: n,
+            email: e,
+            password: p,
+            notel: t
+        };
+
+        hantarKeCloud(dataGuru);
+        alert("Pendaftaran Berjaya Dihantar! Sila tunggu sebentar sebelum Log Masuk.");
+        setTimeout(syncGuruData, 3000); // Sync balik selepas 3 saat
+        showPage('page-login-guru');
+    } else {
+        alert("Sila isi semua maklumat!");
+    }
+}
+
+// --- SCANNER UI ---
 function startScanMode() { 
     showPage('page-scan'); 
     
@@ -89,22 +155,23 @@ function processRFID(uid) {
         let masaSekarang = getLocalSystemTime();
 
         if(!r) {
-            // 1. Simpan dalam Memori Browser (Local)
+            // 1. Simpan Lokal (Pantas)
             m.kehadiran.push({
                 tarikh: today, 
                 status: stat, 
                 masa: masaSekarang
             }); 
 
-            // 2. HANTAR KE GOOGLE SHEETS (Database Kekal)
+            // 2. Simpan Cloud (Kekal)
             const dataKeSheets = {
+                jenis: "kehadiran",
                 tarikh: today,
                 nama: m.nama,
                 status: stat,
                 masa: masaSekarang,
                 uid: cleanUID
             };
-            hantarKeGoogleSheets(dataKeSheets);
+            hantarKeCloud(dataKeSheets);
 
         } else {
             stat = r.status;
@@ -117,6 +184,6 @@ function processRFID(uid) {
         
         setTimeout(() => document.getElementById('scan-result').classList.add('hidden'), 3000);
     } else {
-        alert("Kad Tidak Dikenali! Sila daftarkan UID kad ini terlebih dahulu.");
+        alert("Kad Tidak Dikenali! Sila daftarkan UID murid di dalam pangkalan data.");
     }
 }
