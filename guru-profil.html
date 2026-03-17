@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMSIRA - Profil Guru</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        button.btn-success { background: var(--success); }
+        button.btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links">
+            <a href="dashboard-guru.html"><i class="fas fa-arrow-left"></i> Kembali</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2 style="color: var(--primary); margin-bottom: 20px;">Profil Guru</h2>
+            <div class="grid-2">
+                <div>
+                    <label>Nama Penuh</label>
+                    <input type="text" id="pg-name">
+                </div>
+                <div>
+                    <label>Telefon</label>
+                    <input type="text" id="pg-phone">
+                </div>
+                <div>
+                    <label>E-mel</label>
+                    <input type="email" id="pg-email">
+                </div>
+                <div>
+                    <label>Kata Laluan</label>
+                    <input type="text" id="pg-pass">
+                </div>
+            </div>
+            <button class="btn btn-success" style="margin-top: 20px;" onclick="simpanProfil()">
+                <i class="fas fa-save"></i> Simpan Profil
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { gurus: [] };
+        }
+
+        function saveDB(db) {
+            localStorage.setItem('semsiraDB', JSON.stringify(db));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('pg-name').value = currentUser.name || '';
+                document.getElementById('pg-phone').value = currentUser.phone || '';
+                document.getElementById('pg-email').value = currentUser.email || '';
+                document.getElementById('pg-pass').value = currentUser.pass || '';
+            }
+        });
+
+        function simpanProfil() {
+            currentUser.name = document.getElementById('pg-name').value;
+            currentUser.phone = document.getElementById('pg-phone').value;
+            currentUser.email = document.getElementById('pg-email').value;
+            currentUser.pass = document.getElementById('pg-pass').value;
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            const db = getDB();
+            const index = db.gurus.findIndex(g => g.id === currentUser.id);
+            if (index !== -1) {
+                db.gurus[index] = currentUser;
+                saveDB(db);
+            }
+            
+            alert('Profil berjaya dikemaskini!');
+            window.location.href = 'dashboard-guru.html';
+        }
+    </script>
+</body>
+</html>
