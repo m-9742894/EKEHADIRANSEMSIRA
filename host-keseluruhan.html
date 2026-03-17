@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMSIRA - Host: Keseluruhan</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .sub-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        input { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .clickable-text { color: var(--primary); cursor: pointer; text-decoration: underline; }
+        ul { list-style: none; padding-left: 0; }
+        li { padding: 5px 0; border-bottom: 1px solid #334155; }
+        canvas { max-height: 300px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links">
+            <a href="dashboard-host.html"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3>Statistik Keseluruhan</h3>
+                <div>
+                    <input type="date" id="tarikh-pilih" style="width:200px; margin-right:10px;" onchange="renderStatistik()">
+                </div>
+            </div>
+            <div style="height: 300px; margin: 20px 0;">
+                <canvas id="chartKeseluruhan"></canvas>
+            </div>
+            <div class="grid-3">
+                <div class="sub-card">
+                    <h4 style="color: var(--success);">Hadir</h4>
+                    <ul id="list-hadir"></ul>
+                </div>
+                <div class="sub-card">
+                    <h4 style="color: var(--warning);">Lewat</h4>
+                    <ul id="list-lewat"></ul>
+                </div>
+                <div class="sub-card">
+                    <h4 style="color: var(--danger);">Tidak Hadir</h4>
+                    <ul id="list-takhadir"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { murid: [], hariOperasi: 10 };
+        }
+
+        const getLocalSystemDate = () => {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('tarikh-pilih').value = getLocalSystemDate();
+            renderStatistik();
+        });
+
+        function renderStatistik() {
+            const db = getDB();
+            const date = document.getElementById('tarikh-pilih').value;
+
+            let hadir = 0, lewat = 0, takhadir = 0;
+            let listHadir = [], listLewat = [], listTakhadir = [];
+
+            db.murid.forEach(m => {
+                const rekod = m.kehadiran.find(r => r.tarikh === date);
+                if (rekod) {
+                    if (rekod.status === 'Lewat') {
+                        lewat++;
+                        listLewat.push(`<li><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></li>`);
+                    } else {
+                        hadir++;
+                        listHadir.push(`<li><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></li>`);
+                    }
+                } else {
+                    takhadir++;
+                    listTakhadir.push(`<li><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></li>`);
+                }
+            });
+
+            // Update Chart
+            const ctx = document.getElementById('chartKeseluruhan').getContext('2d');
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Hadir', 'Lewat', 'Tak Hadir'],
+                    datasets: [{
+                        data: [hadir, lewat, takhadir],
+                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { color: '#fff', stepSize: 1 } },
+                        x: { ticks: { color: '#fff' } }
+                    }
+                }
+            });
+
+            document.getElementById('list-hadir').innerHTML = listHadir.join('') || 'Tiada';
+            document.getElementById('list-lewat').innerHTML = listLewat.join('') || 'Tiada';
+            document.getElementById('list-takhadir').innerHTML = listTakhadir.join('') || 'Tiada';
+        }
+    </script>
+</body>
+</html>
