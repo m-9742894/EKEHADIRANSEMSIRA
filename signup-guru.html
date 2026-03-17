@@ -33,13 +33,52 @@
             <input type="text" id="reg-phone" placeholder="Nombor Telefon">
             <input type="email" id="reg-email" placeholder="Alamat E-mel">
             <input type="password" id="reg-pass" placeholder="Kata Laluan">
-            <button class="btn" onclick="registerGuru()">Daftar</button>
+            <button class="btn" id="main-btn" onclick="registerGuru()">Daftar</button>
         </div>
     </div>
 
+    <script>
+        window.registerGuru = function() {
+            console.log("Button clicked!");
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            if (!name || !email || !pass) {
+                alert("Sila isi maklumat yang diperlukan (Nama, Emel, Kata Laluan)!");
+                return;
+            }
+
+            const newGuru = {
+                id: Date.now(),
+                name: name,
+                phone: phone,
+                email: email,
+                pass: pass
+            };
+
+            // 保存到本地
+            try {
+                const saved = localStorage.getItem('semsiraDB');
+                let localDB = saved ? JSON.parse(saved) : { gurus: [] };
+                if(!localDB.gurus) localDB.gurus = [];
+                localDB.gurus.push(newGuru);
+                localStorage.setItem('semsiraDB', JSON.stringify(localDB));
+            } catch(e) { console.error("Local storage error", e); }
+
+            // 触发 Firebase 逻辑 (通过自定义事件)
+            const event = new CustomEvent('firebaseRegister', { detail: newGuru });
+            window.dispatchEvent(event);
+            
+            // 为了防止 Firebase 还没加载完，先给用户一个反馈
+            document.getElementById('main-btn').innerText = "Menghantar...";
+            document.getElementById('main-btn').disabled = true;
+        };
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        // 必须导入 database 模块
         import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -52,52 +91,26 @@
             measurementId: "G-QE4862H49Z"
         };
 
-        // 初始化
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 将函数暴露给全局，让 HTML 上的 onclick 能找到它
-        window.registerGuru = function() {
-            const name = document.getElementById('reg-name').value;
-            const phone = document.getElementById('reg-phone').value;
-            const email = document.getElementById('reg-email').value;
-            const pass = document.getElementById('reg-pass').value;
-
-            if (name && email && pass) {
-                // 构造数据
-                const newGuru = {
-                    id: Date.now(),
-                    name: name,
-                    phone: phone,
-                    email: email,
-                    pass: pass
-                };
-
-                // 1. 同步到本地 (保持你的离线功能)
-                const saved = localStorage.getItem('semsiraDB');
-                let localDB = saved ? JSON.parse(saved) : { gurus: [] };
-                if(!localDB.gurus) localDB.gurus = [];
-                localDB.gurus.push(newGuru);
-                localStorage.setItem('semsiraDB', JSON.stringify(localDB));
-
-                // 2. 同步到 Firebase (云端功能)
-                const gurusRef = ref(db, 'gurus');
-                const newGuruRef = push(gurusRef);
-                
-                set(newGuruRef, newGuru)
-                .then(() => {
-                    alert("Pendaftaran Berjaya!");
-                    window.location.href = 'login-guru.html';
-                })
-                .catch((error) => {
-                    console.error(error);
-                    alert("Gagal simpan ke Cloud, tapi data disimpan secara lokal.");
-                    window.location.href = 'login-guru.html';
-                });
-            } else {
-                alert("Sila isi semua maklumat!");
-            }
-        };
+        // 监听来自页面的注册信号
+        window.addEventListener('firebaseRegister', (e) => {
+            const data = e.detail;
+            const gurusRef = ref(db, 'gurus');
+            const newGuruRef = push(gurusRef);
+            
+            set(newGuruRef, data)
+            .then(() => {
+                alert("Pendaftaran Berjaya!");
+                window.location.href = 'login-guru.html';
+            })
+            .catch((error) => {
+                console.error(error);
+                alert("Simpanan Cloud gagal, tetapi data telah disimpan dalam peranti ini.");
+                window.location.href = 'login-guru.html';
+            });
+        });
     </script>
 </body>
 </html>
