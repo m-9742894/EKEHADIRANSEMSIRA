@@ -34,42 +34,70 @@
             <input type="text" id="reg-phone" placeholder="Nombor Telefon">
             <input type="email" id="reg-email" placeholder="Alamat E-mel">
             <input type="password" id="reg-pass" placeholder="Kata Laluan">
-            <button class="btn" style="width: 100%;" onclick="registerGuru()">Daftar</button>
+            <button class="btn" id="btn-daftar" style="width: 100%;">Daftar</button>
         </div>
     </div>
 
-    <script>
-        function getDB() {
-            const saved = localStorage.getItem('semsiraDB');
-            return saved ? JSON.parse(saved) : { gurus: [], host: {}, kelas: [], murid: [], hariOperasi: 10, cuti: [], tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' } };
-        }
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-        function saveDB(db) {
-            localStorage.setItem('semsiraDB', JSON.stringify(db));
-        }
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxZIDIPRhwXT_1aeS-dKsG2kmuUyJLUlQ",
+            authDomain: "semsirakehadiran.firebaseapp.com",
+            projectId: "semsirakehadiran",
+            storageBucket: "semsirakehadiran.firebasestorage.app",
+            messagingSenderId: "68504541700",
+            appId: "1:68504541700:web:26939e18ed7ae32fe57351",
+            measurementId: "G-QE4862H49Z"
+        };
 
-        function registerGuru() { 
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 对接注册功能
+        window.registerGuru = function() {
             const name = document.getElementById('reg-name').value;
             const phone = document.getElementById('reg-phone').value;
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-pass').value;
-            
-            if(name && email && pass) { 
-                const db = getDB();
-                db.gurus.push({
-                    id: Date.now(), 
-                    name: name, 
-                    phone: phone, 
-                    email: email, 
+
+            if (name && email && pass) {
+                // 1. 保存到本地存储 (保持原有逻辑)
+                const localDB = JSON.parse(localStorage.getItem('semsiraDB')) || { gurus: [] };
+                const newGuru = {
+                    id: Date.now(),
+                    name: name,
+                    phone: phone,
+                    email: email,
                     pass: pass
-                }); 
-                saveDB(db);
-                alert("Pendaftaran Berjaya! Sila log masuk."); 
-                window.location.href = 'login-guru.html'; 
+                };
+                localDB.gurus.push(newGuru);
+                localStorage.setItem('semsiraDB', JSON.stringify(localDB));
+
+                // 2. 对接到 Firebase 云端
+                const gurusRef = ref(db, 'gurus');
+                const newGuruRef = push(gurusRef);
+                set(newGuruRef, newGuru)
+                .then(() => {
+                    alert("Pendaftaran Berjaya ke Cloud! Sila log masuk.");
+                    window.location.href = 'login-guru.html';
+                })
+                .catch((error) => {
+                    console.error("Firebase Error:", error);
+                    alert("Berjaya simpan di lokal, tapi gagal ke Cloud.");
+                    window.location.href = 'login-guru.html';
+                });
+
             } else {
                 alert("Sila isi semua maklumat!");
             }
-        }
+        };
+
+        // 绑定按钮点击事件
+        document.getElementById('btn-daftar').onclick = window.registerGuru;
     </script>
 </body>
 </html>
