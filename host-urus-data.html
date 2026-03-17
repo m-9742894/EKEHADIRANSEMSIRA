@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMSIRA - Host: Urus Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .sub-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: var(--primary); }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px; }
+        button.btn-success { background: var(--success); }
+        button.btn-danger { background: var(--danger); }
+        button.btn-warning { background: var(--warning); color: black; }
+        .clickable-row:hover { background: rgba(14,165,233,0.1); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links">
+            <a href="dashboard-host.html"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Tambah Guru -->
+        <div class="card">
+            <h3>Pengurusan Data Sekolah</h3>
+            <div class="sub-card no-print" style="border:1px dashed var(--primary);">
+                <h4><i class="fas fa-user-plus"></i> Tambah Guru Baru</h4>
+                <div class="grid-2">
+                    <input type="text" id="add-guru-nama" placeholder="Nama Guru">
+                    <input type="email" id="add-guru-email" placeholder="E-mel">
+                    <input type="text" id="add-guru-phone" placeholder="No Telefon">
+                    <input type="text" id="add-guru-pass" placeholder="Kata Laluan" value="123">
+                </div>
+                <button class="btn btn-success" onclick="tambahGuru()">Tambah Guru</button>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nama Guru</th>
+                        <th>Telefon</th>
+                        <th>Emel</th>
+                        <th class="no-print">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody id="table-guru"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { gurus: [], kelas: [], murid: [] };
+        }
+
+        function saveDB(db) {
+            localStorage.setItem('semsiraDB', JSON.stringify(db));
+        }
+
+        document.addEventListener('DOMContentLoaded', renderGuru);
+
+        function renderGuru() {
+            const db = getDB();
+            const tbody = document.getElementById('table-guru');
+            tbody.innerHTML = '';
+
+            db.gurus.forEach(g => {
+                tbody.innerHTML += `
+                    <tr class="clickable-row" onclick="window.location.href='teacher-detail.html?id=${g.id}'">
+                        <td><i class="fas fa-user-circle"></i> ${g.name}</td>
+                        <td>${g.phone || '-'}</td>
+                        <td>${g.email}</td>
+                        <td class="no-print">
+                            <button class="btn btn-warning" onclick="event.stopPropagation(); window.location.href='teacher-detail.html?id=${g.id}'">Urus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function tambahGuru() {
+            const nama = document.getElementById('add-guru-nama').value;
+            const email = document.getElementById('add-guru-email').value;
+            const phone = document.getElementById('add-guru-phone').value;
+            const pass = document.getElementById('add-guru-pass').value;
+
+            if (nama && email) {
+                const db = getDB();
+                db.gurus.push({
+                    id: Date.now(),
+                    name: nama,
+                    email: email,
+                    phone: phone,
+                    pass: pass
+                });
+                saveDB(db);
+                alert('Guru ditambah!');
+                document.getElementById('add-guru-nama').value = '';
+                document.getElementById('add-guru-email').value = '';
+                document.getElementById('add-guru-phone').value = '';
+                renderGuru();
+            }
+        }
+    </script>
+</body>
+</html>
