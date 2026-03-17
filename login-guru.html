@@ -4,25 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISTEM KEHADIRAN MURID SEMSIRA - Log Masuk Guru</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-main); }
-        .hidden { display: none !important; }
-        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); flex-wrap: wrap; gap: 10px;}
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
         .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 1px; }
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
-        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
         button.btn:hover { background: #0284c7; }
+        button.btn:disabled { background: #334155; cursor: not-allowed; }
         input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
-        @media print {
-            nav, .btn, .no-print, input[type="date"], input.no-print { display: none !important; }
-            body { background: white; color: black; }
-            .card { background: none; box-shadow: none; border: 1px solid #ccc; color: black; }
-        }
     </style>
 </head>
 <body>
@@ -31,44 +25,23 @@
     </nav>
 
     <div class="container" style="max-width: 400px;">
-        <button class="btn no-print" onclick="window.location.href='index.html'" style="margin-bottom: 20px;">
+        <button class="btn" onclick="window.location.href='index.html'" style="margin-bottom: 20px; width: auto;">
             <i class="fas fa-arrow-left"></i> Kembali
         </button>
         <div class="card">
             <h2>Log Masuk Guru</h2>
             <input type="email" id="login-guru-email" placeholder="E-mel Guru">
             <input type="password" id="login-guru-pass" placeholder="Kata Laluan">
-            <button class="btn" id="btn-login" style="width: 100%;">Log Masuk</button>
+            <button class="btn" id="btn-login" onclick="handleLogin()">Log Masuk</button>
+            <p style="margin-top: 15px; text-align: center; font-size: 0.9rem;">
+                Belum ada akaun? <a href="sign-up.html" style="color: var(--primary);">Daftar di sini</a>
+            </p>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBxZIDIPRhwXT_1aeS-dKsG2kmuUyJLUlQ",
-            authDomain: "semsirakehadiran.firebaseapp.com",
-            projectId: "semsirakehadiran",
-            storageBucket: "semsirakehadiran.firebasestorage.app",
-            messagingSenderId: "68504541700",
-            appId: "1:68504541700:web:26939e18ed7ae32fe57351",
-            measurementId: "G-QE4862H49Z"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // 获取本地数据库
-        function getDB() {
-            const saved = localStorage.getItem('semsiraDB');
-            return saved ? JSON.parse(saved) : { gurus: [] };
-        }
-
-        // 登录逻辑
-        window.loginGuru = async function() {
+    <script>
+        // UI 逻辑：获取输入并发送信号
+        window.handleLogin = function() {
             const email = document.getElementById('login-guru-email').value;
             const pass = document.getElementById('login-guru-pass').value;
 
@@ -77,53 +50,83 @@
                 return;
             }
 
-            // 1. 优先尝试本地登录 (保持原有逻辑的速度)
-            const localDB = getDB();
-            let guru = localDB.gurus ? localDB.gurus.find(x => x.email === email && x.pass === pass) : null;
+            const btn = document.getElementById('btn-login');
+            btn.innerText = "Menyemak...";
+            btn.disabled = true;
 
-            if (guru) {
-                executeLogin(guru);
-                return;
-            }
+            // 发送信号给 Firebase 模块
+            const event = new CustomEvent('doFirebaseLogin', { 
+                detail: { email, pass } 
+            });
+            window.dispatchEvent(event);
+        };
+    </script>
 
-            // 2. 本地找不到，尝试从 Firebase 云端同步登录
-            console.log("Checking Cloud Database...");
-            try {
-                const dbRef = ref(db);
-                const snapshot = await get(child(dbRef, `gurus`));
-                
-                if (snapshot.exists()) {
-                    const allGurus = snapshot.val();
-                    // 在 Firebase 返回的对象列表中查找匹配者
-                    const cloudGuru = Object.values(allGurus).find(g => g.email === email && g.pass === pass);
-                    
-                    if (cloudGuru) {
-                        // 登录成功，顺便把该数据同步到本地，方便下次离线使用
-                        if(!localDB.gurus) localDB.gurus = [];
-                        localDB.gurus.push(cloudGuru);
-                        localStorage.setItem('semsiraDB', JSON.stringify(localDB));
-                        
-                        executeLogin(cloudGuru);
-                    } else {
-                        alert("Emel atau kata laluan guru salah!");
-                    }
-                } else {
-                    alert("Tiada data guru ditemui di Cloud.");
-                }
-            } catch (error) {
-                console.error("Cloud Error:", error);
-                alert("Ralat menyambung ke Cloud. Sila semak internet anda.");
-            }
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxZIDIPRhwXT_1aeS-dKsG2kmuUyJLUlQ",
+            authDomain: "semsirakehadiran.firebaseapp.com",
+            databaseURL: "https://semsirakehadiran-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "semsirakehadiran",
+            storageBucket: "semsirakehadiran.firebasestorage.app",
+            messagingSenderId: "68504541700",
+            appId: "1:68504541700:web:26939e18ed7ae32fe57351",
+            measurementId: "G-QE4862H49Z"
         };
 
-        function executeLogin(guru) {
-            localStorage.setItem('currentUser', JSON.stringify(guru));
-            alert("Log Masuk Berjaya!");
-            window.location.href = 'dashboard-guru.html';
-        }
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
 
-        // 绑定按钮点击事件
-        document.getElementById('btn-login').onclick = window.loginGuru;
+        window.addEventListener('doFirebaseLogin', async (e) => {
+            const { email, pass } = e.detail;
+            const btn = document.getElementById('btn-login');
+
+            try {
+                // 1. 使用 Firebase Auth 进行身份验证
+                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
+
+                // 2. 验证成功后，从 Realtime Database 获取该用户的详细资料（姓名、电话等）
+                const userRef = ref(db, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+
+                let userData = {
+                    uid: user.uid,
+                    email: user.email,
+                    name: "Guru", // 默认名称
+                    role: "guru"
+                };
+
+                if (snapshot.exists()) {
+                    userData = snapshot.val();
+                }
+
+                // 3. 将用户信息存入 localStorage (兼容你原有的系统)
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+
+                alert("Log Masuk Berjaya! Selamat Kembali, " + (userData.name || "Guru"));
+                window.location.href = 'dashboard-guru.html';
+
+            } catch (error) {
+                console.error("Login Error:", error);
+                btn.disabled = false;
+                btn.innerText = "Log Masuk";
+
+                // 处理常见登录错误
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    alert("E-mel atau kata laluan salah!");
+                } else if (error.code === 'auth/too-many-requests') {
+                    alert("Terlalu banyak percubaan. Sila cuba sebentar lagi.");
+                } else {
+                    alert("Ralat: " + error.message);
+                }
+            }
+        });
     </script>
 </body>
 </html>
