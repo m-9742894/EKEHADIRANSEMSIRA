@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMSIRA - Kehadiran Kelas</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        input, select { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .clickable-row:hover { background: rgba(14, 165, 233, 0.1); cursor: pointer; }
+        .no-print { display: inline-block; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links">
+            <a href="dashboard-guru.html"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3>Status Kehadiran Mengikut Kelas</h3>
+                <div class="no-print">
+                    <input type="date" id="tarikh-pilih" style="width:200px; margin-right:10px;" onchange="renderKelas()">
+                </div>
+            </div>
+            <div id="kelas-grid" class="grid-3"></div>
+        </div>
+    </div>
+
+    <script>
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { kelas: [], murid: [] };
+        }
+
+        const getLocalSystemDate = () => {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('tarikh-pilih').value = getLocalSystemDate();
+            renderKelas();
+        });
+
+        function renderKelas() {
+            const db = getDB();
+            const date = document.getElementById('tarikh-pilih').value || getLocalSystemDate();
+            const grid = document.getElementById('kelas-grid');
+            grid.innerHTML = '';
+
+            db.kelas.forEach(k => {
+                const mk = db.murid.filter(m => m.kelasId === k.id);
+                let hadir = mk.filter(m => m.kehadiran.some(r => r.tarikh === date)).length;
+                const peratus = mk.length === 0 ? 0 : Math.round((hadir / mk.length) * 100);
+
+                grid.innerHTML += `
+                    <div class="card clickable-row" style="text-align:center; border:1px solid var(--primary);" onclick="window.location.href='class-detail.html?id=${k.id}&date=${date}'">
+                        <h2 style="color:var(--primary);">${k.name}</h2>
+                        <div style="font-size:2rem; font-weight:bold; margin:10px 0;">${peratus}%</div>
+                        <p>Hadir: ${hadir}/${mk.length}</p>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
