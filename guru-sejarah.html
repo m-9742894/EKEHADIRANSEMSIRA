@@ -193,4 +193,212 @@
                     <label><i class="fas fa-chalkboard"></i> Pilih Kelas:</label>
                     <select id="pilih-kelas" onchange="paparSejarah()"></select>
                 </div>
-                <
+                <div>
+                    <label><i class="fas fa-calendar-day"></i> Tarikh Spesifik (Pilihan):</label>
+                    <input type="date" id="tarikh-spesifik" onchange="paparSejarah()">
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div style="overflow-x: auto;">
+                <table id="sejarah-table">
+                    <thead>
+                        <tr>
+                            <th>Nama Murid</th>
+                            <th>No KP</th>
+                            <th class="text-success">Hadir</th>
+                            <th class="text-warning">Lewat</th>
+                            <th class="text-danger">Tidak Hadir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--warning);">
+                                Sila pilih tahun dan kelas untuk melihat sejarah
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Utility Functions
+        const getCurrentYear = () => new Date().getFullYear().toString();
+
+        // Database functions
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { 
+                gurus: [], 
+                kelas: [], 
+                murid: [], 
+                hariOperasi: 10,
+                cuti: [],
+                tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' }
+            };
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check login
+            const savedUser = localStorage.getItem('currentUser');
+            if (!savedUser) {
+                window.location.href = 'login-guru.html';
+                return;
+            }
+
+            // Populate dropdowns
+            populateDropdowns();
+        });
+
+        // Populate year and class dropdowns
+        function populateDropdowns() {
+            const db = getDB();
+            const tahunEl = document.getElementById('pilih-tahun');
+            const kelasEl = document.getElementById('pilih-kelas');
+
+            // Get unique years from student history
+            const tahunSet = new Set();
+            db.murid.forEach(m => {
+                if (m.sejarahKelas && m.sejarahKelas.length > 0) {
+                    m.sejarahKelas.forEach(sk => tahunSet.add(sk.tahun));
+                } else {
+                    tahunSet.add(getCurrentYear());
+                }
+            });
+
+            // Add current year if not present
+            tahunSet.add(getCurrentYear());
+
+            // Sort years descending
+            const tahunArray = Array.from(tahunSet).sort().reverse();
+
+            // Populate year dropdown
+            tahunEl.innerHTML = '';
+            tahunArray.forEach(t => {
+                tahunEl.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+
+            // Populate class dropdown
+            kelasEl.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+            db.kelas.forEach(k => {
+                kelasEl.innerHTML += `<option value="${k.id}">${k.name}</option>`;
+            });
+
+            // Trigger initial search if class is preselected
+            if (kelasEl.value) {
+                paparSejarah();
+            }
+        }
+
+        // Main function to display history
+        function paparSejarah() {
+            const db = getDB();
+            const tahun = document.getElementById('pilih-tahun').value;
+            const kelasId = document.getElementById('pilih-kelas').value;
+            const tarikhSpesifik = document.getElementById('tarikh-spesifik').value;
+            const tbody = document.getElementById('table-body');
+
+            // Clear table
+            tbody.innerHTML = '';
+
+            // Validation
+            if (!kelasId) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--warning);">Sila pilih kelas untuk melihat sejarah</td></tr>';
+                return;
+            }
+
+            // Find students in this class for the selected year
+            let muridKelas = [];
+            
+            db.murid.forEach(m => {
+                let dalamKelasIni = false;
+                
+                // Check if student was in this class during selected year
+                if (m.sejarahKelas && m.sejarahKelas.length > 0) {
+                    const rekodSejarah = m.sejarahKelas.find(sk => sk.tahun === tahun);
+                    if (rekodSejarah && rekodSejarah.kelasId === parseInt(kelasId)) {
+                        dalamKelasIni = true;
+                    }
+                } else {
+                    // If no sejarahKelas data, assume current year
+                    if (tahun === getCurrentYear() && m.kelasId === parseInt(kelasId)) {
+                        dalamKelasIni = true;
+                    }
+                }
+                
+                if (dalamKelasIni) {
+                    muridKelas.push(m);
+                }
+            });
+
+            if (muridKelas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Tiada rekod murid untuk kelas ini pada tahun ${tahun}</td></tr>`;
+                return;
+            }
+
+            // Display based on specific date or yearly summary
+            if (tarikhSpesifik) {
+                // Check if selected date is within the year
+                if (!tarikhSpesifik.startsWith(tahun)) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger);">Tarikh yang dipilih berada di luar tahun ${tahun}</td></tr>`;
+                    return;
+                }
+
+                // Show attendance for specific date
+                muridKelas.forEach(m => {
+                    const rekod = m.kehadiran.find(r => r.tarikh === tarikhSpesifik);
+                    const hadir = rekod && rekod.status === 'Hadir' ? 1 : 0;
+                    const lewat = rekod && rekod.status === 'Lewat' ? 1 : 0;
+                    const takhadir = !rekod ? 1 : 0;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></td>
+                            <td>${m.ic}</td>
+                            <td class="text-success">${hadir}</td>
+                            <td class="text-warning">${lewat}</td>
+                            <td class="text-danger">${takhadir}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                // Show yearly summary
+                muridKelas.forEach(m => {
+                    let hadir = 0, lewat = 0;
+                    
+                    // Count attendance for the selected year
+                    m.kehadiran.forEach(r => {
+                        if (r.tarikh.startsWith(tahun)) {
+                            if (r.status === 'Lewat') {
+                                lewat++;
+                            } else {
+                                hadir++;
+                            }
+                        }
+                    });
+                    
+                    // Calculate absent days
+                    let takhadir = db.hariOperasi - (hadir + lewat);
+                    if (takhadir < 0) takhadir = 0;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></td>
+                            <td>${m.ic}</td>
+                            <td class="text-success">${hadir} Hari</td>
+                            <td class="text-warning">${lewat} Hari</td>
+                            <td class="text-danger">${takhadir} Hari</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        // Expose function globally
+        window.paparSejarah = paparSejarah;
+    </script>
+</body>
+</html>
