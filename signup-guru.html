@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEM KEHADIRAN MURID SEMSIRA - Daftar Guru</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 1px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button.btn:hover { background: #0284c7; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <nav id="navbar">
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+    </nav>
+
+    <div class="container" style="max-width: 400px;">
+        <button class="btn no-print" onclick="window.location.href='index.html'" style="margin-bottom: 20px;">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+        <div class="card">
+            <h2>Daftar Guru Baru</h2>
+            <input type="text" id="reg-name" placeholder="Nama Penuh">
+            <input type="text" id="reg-phone" placeholder="Nombor Telefon">
+            <input type="email" id="reg-email" placeholder="Alamat E-mel">
+            <input type="password" id="reg-pass" placeholder="Kata Laluan">
+            <button class="btn" style="width: 100%;" onclick="registerGuru()">Daftar</button>
+        </div>
+    </div>
+
+    <script>
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { gurus: [], host: {}, kelas: [], murid: [], hariOperasi: 10, cuti: [], tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' } };
+        }
+
+        function saveDB(db) {
+            localStorage.setItem('semsiraDB', JSON.stringify(db));
+        }
+
+        function registerGuru() { 
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            
+            if(name && email && pass) { 
+                const db = getDB();
+                db.gurus.push({
+                    id: Date.now(), 
+                    name: name, 
+                    phone: phone, 
+                    email: email, 
+                    pass: pass
+                }); 
+                saveDB(db);
+                alert("Pendaftaran Berjaya! Sila log masuk."); 
+                window.location.href = 'login-guru.html'; 
+            } else {
+                alert("Sila isi semua maklumat!");
+            }
+        }
+    </script>
+</body>
+</html>
