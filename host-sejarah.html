@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMSIRA - Host: Sejarah</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        select, input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: var(--primary); }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .clickable-text { color: var(--primary); cursor: pointer; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links">
+            <a href="dashboard-host.html"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h3><i class="fas fa-history"></i> Sejarah Keseluruhan Murid</h3>
+            <div class="grid-3 no-print" style="margin-top:15px; background:#0f172a; padding:15px; border-radius:8px;">
+                <div>
+                    <label>Pilih Tahun:</label>
+                    <select id="pilih-tahun" onchange="paparSejarah()"></select>
+                </div>
+                <div>
+                    <label>Pilih Kelas:</label>
+                    <select id="pilih-kelas" onchange="paparSejarah()"></select>
+                </div>
+                <div>
+                    <label>Tarikh Spesifik (Pilihan):</label>
+                    <input type="date" id="tarikh-spesifik" onchange="paparSejarah()">
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nama Murid</th>
+                        <th>No KP</th>
+                        <th style="color:var(--success);">Hadir</th>
+                        <th style="color:var(--warning);">Lewat</th>
+                        <th style="color:var(--danger);">Tidak Hadir</th>
+                    </tr>
+                </thead>
+                <tbody id="table-sejarah"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { murid: [], kelas: [], hariOperasi: 10 };
+        }
+
+        const getCurrentYear = () => new Date().getFullYear().toString();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const db = getDB();
+            
+            // Populate tahun
+            const tahunSet = new Set();
+            db.murid.forEach(m => {
+                if (m.sejarahKelas) {
+                    m.sejarahKelas.forEach(sk => tahunSet.add(sk.tahun));
+                } else {
+                    tahunSet.add(getCurrentYear());
+                }
+            });
+            
+            const tahunEl = document.getElementById('pilih-tahun');
+            tahunEl.innerHTML = '';
+            Array.from(tahunSet).sort().reverse().forEach(t => {
+                tahunEl.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+            
+            // Populate kelas
+            const kelasEl = document.getElementById('pilih-kelas');
+            kelasEl.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+            db.kelas.forEach(k => {
+                kelasEl.innerHTML += `<option value="${k.id}">${k.name}</option>`;
+            });
+            
+            paparSejarah();
+        });
+
+        function paparSejarah() {
+            const db = getDB();
+            const tahun = document.getElementById('pilih-tahun').value;
+            const kelasId = document.getElementById('pilih-kelas').value;
+            const tarikh = document.getElementById('tarikh-spesifik').value;
+            const tbody = document.getElementById('table-sejarah');
+
+            tbody.innerHTML = '';
+
+            if (!kelasId) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--warning);">Sila pilih kelas</td></tr>';
+                return;
+            }
+
+            // Cari murid dalam kelas ini pada tahun tersebut
+            const muridKelas = db.murid.filter(m => {
+                if (m.sejarahKelas) {
+                    return m.sejarahKelas.some(sk => sk.tahun === tahun && sk.kelasId === parseInt(kelasId));
+                } else {
+                    return tahun === getCurrentYear() && m.kelasId === parseInt(kelasId);
+                }
+            });
+
+            if (muridKelas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Tiada rekod</td></tr>';
+                return;
+            }
+
+            if (tarikh) {
+                // Paparan ikut tarikh spesifik
+                muridKelas.forEach(m => {
+                    const r = m.kehadiran.find(x => x.tarikh === tarikh);
+                    const hadir = r && r.status === 'Hadir' ? 1 : 0;
+                    const lewat = r && r.status === 'Lewat' ? 1 : 0;
+                    const takhadir = !r ? 1 : 0;
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></td>
+                            <td>${m.ic}</td>
+                            <td style="color:var(--success); font-weight:bold;">${hadir}</td>
+                            <td style="color:var(--warning); font-weight:bold;">${lewat}</td>
+                            <td style="color:var(--danger); font-weight:bold;">${takhadir}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                // Paparan kumulatif setahun
+                muridKelas.forEach(m => {
+                    let hadir = 0, lewat = 0;
+                    m.kehadiran.forEach(r => {
+                        if (r.tarikh.startsWith(tahun)) {
+                            if (r.status === 'Lewat') lewat++;
+                            else hadir++;
+                        }
+                    });
+                    let takhadir = db.hariOperasi - (hadir + lewat);
+                    if (takhadir < 0) takhadir = 0;
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></td>
+                            <td>${m.ic}</td>
+                            <td style="color:var(--success); font-weight:bold;">${hadir} Hari</td>
+                            <td style="color:var(--warning); font-weight:bold;">${lewat} Hari</td>
+                            <td style="color:var(--danger); font-weight:bold;">${takhadir} Hari</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+    </script>
+</body>
+</html>
