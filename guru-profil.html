@@ -16,10 +16,13 @@
         .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
         .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
-        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        label { display: block; margin-top: 10px; color: var(--text-muted); font-size: 0.9rem; }
+        input { width: 100%; padding: 10px; margin: 5px 0 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        input:disabled { background: #1e293b; color: var(--text-muted); cursor: not-allowed; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         button.btn-success { background: var(--success); }
         button.btn:hover { opacity: 0.9; }
+        button.btn:disabled { background: #475569; }
     </style>
 </head>
 <body>
@@ -43,61 +46,121 @@
                     <input type="text" id="pg-phone">
                 </div>
                 <div>
-                    <label>E-mel</label>
-                    <input type="email" id="pg-email">
+                    <label>E-mel (Tidak boleh diubah)</label>
+                    <input type="email" id="pg-email" disabled>
                 </div>
                 <div>
-                    <label>Kata Laluan</label>
-                    <input type="text" id="pg-pass">
+                    <label>ID Pengguna (UID)</label>
+                    <input type="text" id="pg-uid" disabled>
                 </div>
             </div>
-            <button class="btn btn-success" style="margin-top: 20px;" onclick="simpanProfil()">
-                <i class="fas fa-save"></i> Simpan Profil
+            <p style="font-size: 0.8rem; color: var(--warning); margin-top: 10px;">
+                * Sila hubungi Admin jika ingin menukar kata laluan atau e-mel.
+            </p>
+            <button class="btn btn-success" id="btn-save" style="margin-top: 20px;" onclick="handleUpdate()">
+                <i class="fas fa-save"></i> Simpan Kemaskini
             </button>
         </div>
     </div>
 
     <script>
-        let currentUser = null;
+        // UI 逻辑
+        window.handleUpdate = function() {
+            const name = document.getElementById('pg-name').value;
+            const phone = document.getElementById('pg-phone').value;
 
-        function getDB() {
-            const saved = localStorage.getItem('semsiraDB');
-            return saved ? JSON.parse(saved) : { gurus: [] };
-        }
+            if (!name) {
+                alert("Nama tidak boleh kosong!");
+                return;
+            }
 
-        function saveDB(db) {
-            localStorage.setItem('semsiraDB', JSON.stringify(db));
-        }
+            document.getElementById('btn-save').disabled = true;
+            document.getElementById('btn-save').innerText = "Menyimpan...";
 
-        document.addEventListener('DOMContentLoaded', function() {
+            // 发送更新信号
+            const event = new CustomEvent('updateFirebaseProfile', { 
+                detail: { name, phone } 
+            });
+            window.dispatchEvent(event);
+        };
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getDatabase, ref, update, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxZIDIPRhwXT_1aeS-dKsG2kmuUyJLUlQ",
+            authDomain: "semsirakehadiran.firebaseapp.com",
+            databaseURL: "https://semsirakehadiran-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "semsirakehadiran",
+            storageBucket: "semsirakehadiran.firebasestorage.app",
+            messagingSenderId: "68504541700",
+            appId: "1:68504541700:web:26939e18ed7ae32fe57351",
+            measurementId: "G-QE4862H49Z"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 加载数据
+        document.addEventListener('DOMContentLoaded', async () => {
             const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                document.getElementById('pg-name').value = currentUser.name || '';
-                document.getElementById('pg-phone').value = currentUser.phone || '';
-                document.getElementById('pg-email').value = currentUser.email || '';
-                document.getElementById('pg-pass').value = currentUser.pass || '';
+            if (!savedUser) {
+                window.location.href = 'login-guru.html';
+                return;
+            }
+
+            const currentUser = JSON.parse(savedUser);
+            
+            // 填充基础数据 (来自 localStorage)
+            document.getElementById('pg-name').value = currentUser.name || '';
+            document.getElementById('pg-phone').value = currentUser.phone || '';
+            document.getElementById('pg-email').value = currentUser.email || '';
+            document.getElementById('pg-uid').value = currentUser.uid || '';
+
+            // 尝试从云端获取最新数据进行同步
+            if (currentUser.uid) {
+                const userRef = ref(db, 'users/' + currentUser.uid);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const cloudData = snapshot.val();
+                    document.getElementById('pg-name').value = cloudData.name || '';
+                    document.getElementById('pg-phone').value = cloudData.phone || '';
+                }
             }
         });
 
-        function simpanProfil() {
-            currentUser.name = document.getElementById('pg-name').value;
-            currentUser.phone = document.getElementById('pg-phone').value;
-            currentUser.email = document.getElementById('pg-email').value;
-            currentUser.pass = document.getElementById('pg-pass').value;
-            
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            const db = getDB();
-            const index = db.gurus.findIndex(g => g.id === currentUser.id);
-            if (index !== -1) {
-                db.gurus[index] = currentUser;
-                saveDB(db);
+        // 处理更新
+        window.addEventListener('updateFirebaseProfile', async (e) => {
+            const { name, phone } = e.detail;
+            const savedUser = JSON.parse(localStorage.getItem('currentUser'));
+            const btn = document.getElementById('btn-save');
+
+            try {
+                // 1. 更新 Firebase Database
+                const userRef = ref(db, 'users/' + savedUser.uid);
+                await update(userRef, {
+                    name: name,
+                    phone: phone,
+                    updatedAt: new Date().toISOString()
+                });
+
+                // 2. 更新本地缓存
+                savedUser.name = name;
+                savedUser.phone = phone;
+                localStorage.setItem('currentUser', JSON.stringify(savedUser));
+
+                alert('Profil berjaya dikemaskini!');
+                window.location.href = 'dashboard-guru.html';
+
+            } catch (error) {
+                console.error(error);
+                alert('Ralat semasa mengemaskini profil.');
+                btn.disabled = false;
+                btn.innerText = "Simpan Kemaskini";
             }
-            
-            alert('Profil berjaya dikemaskini!');
-            window.location.href = 'dashboard-guru.html';
-        }
+        });
     </script>
 </body>
 </html>
