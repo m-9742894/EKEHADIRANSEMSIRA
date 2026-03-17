@@ -3,13 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEMSIRA - Log Masuk Host</title>
+    <title>SISTEM KEHADIRAN MURID SEMSIRA - Log Masuk Host</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
     <style>
-        .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #dc2626; }
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 1px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button.btn:hover { background: #0284c7; }
+        button.btn-danger { background: var(--danger); }
+        button.btn-danger:hover { background: #dc2626; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -29,6 +38,24 @@
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script>
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { host: { email: 'hostsemsira@gmail.com', pass: 'Semsira1969' } };
+        }
+
+        function loginHost() {
+            const db = getDB();
+            const email = document.getElementById('login-host-email').value;
+            const pass = document.getElementById('login-host-pass').value;
+            
+            if(email === db.host.email && pass === db.host.pass) {
+                localStorage.setItem('currentUser', JSON.stringify({ role: 'host' }));
+                window.location.href = 'dashboard-host.html';
+            } else {
+                alert("Emel atau Kata Laluan Host Salah!");
+            }
+        }
+    </script>
 </body>
 </html>
