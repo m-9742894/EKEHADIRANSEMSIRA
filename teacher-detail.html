@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMSIRA - Detail Guru</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .sub-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: var(--primary); }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin: 2px; }
+        button.btn-success { background: var(--success); }
+        button.btn-danger { background: var(--danger); }
+        .inline-input { width: auto; display: inline-block; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links">
+            <a href="host-urus-data.html"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Profil Guru -->
+        <div class="card" style="border-top:4px solid var(--primary);">
+            <h3>Profil Guru</h3>
+            <input type="hidden" id="guru-id">
+            <div class="grid-2">
+                <div><label>Nama:</label><input type="text" id="guru-nama"></div>
+                <div><label>Telefon:</label><input type="text" id="guru-phone"></div>
+                <div><label>E-mel:</label><input type="email" id="guru-email"></div>
+                <div><label>Kata Laluan:</label><input type="text" id="guru-pass"></div>
+            </div>
+            <div class="no-print">
+                <button class="btn btn-success" onclick="simpanGuru()">Simpan Profil</button>
+                <button class="btn btn-danger" onclick="buangGuru()">Padam Guru</button>
+            </div>
+        </div>
+        
+        <!-- Kelas & Murid -->
+        <div class="card">
+            <h3>Pengurusan Kelas & Murid</h3>
+            <div class="sub-card no-print">
+                <input type="text" id="kelas-baru" class="inline-input" placeholder="Nama Kelas Baru">
+                <button class="btn btn-success" onclick="tambahKelas()">Tambah Kelas</button>
+            </div>
+            <div id="kelas-container"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentGuruId = null;
+
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { gurus: [], kelas: [], murid: [] };
+        }
+
+        function saveDB(db) {
+            localStorage.setItem('semsiraDB', JSON.stringify(db));
+        }
+
+        const getCurrentYear = () => new Date().getFullYear().toString();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (id) {
+                currentGuruId = parseInt(id);
+                loadGuru();
+            }
+        });
+
+        function loadGuru() {
+            const db = getDB();
+            const guru = db.gurus.find(g => g.id === currentGuruId);
+            if (guru) {
+                document.getElementById('guru-id').value = guru.id;
+                document.getElementById('guru-nama').value = guru.name;
+                document.getElementById('guru-phone').value = guru.phone || '';
+                document.getElementById('guru-email').value = guru.email;
+                document.getElementById('guru-pass').value = guru.pass || '';
+                renderKelas();
+            }
+        }
+
+        function renderKelas() {
+            const db = getDB();
+            const container = document.getElementById('kelas-container');
+            container.innerHTML = '';
+
+            const kelasGuru = db.kelas.filter(k => k.guruId === currentGuruId);
+
+            kelasGuru.forEach(k => {
+                let html = `
+                    <div class="sub-card">
+                        <div style="display:flex; justify-content:space-between;">
+                            <h4>${k.name}</h4>
+                            <button class="btn btn-danger no-print" onclick="buangKelas(${k.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="no-print" style="margin:10px 0; background:#0f172a; padding:10px;">
+                            <input type="text" id="add-nama-${k.id}" class="inline-input" placeholder="Nama">
+                            <input type="text" id="add-ic-${k.id}" class="inline-input" placeholder="IC">
+                            <input type="text" id="add-uid-${k.id}" class="inline-input" placeholder="UID">
+                            <button class="btn btn-success" onclick="tambahMurid(${k.id})">Tambah</button>
+                        </div>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>IC</th>
+                                    <th>UID</th>
+                                    <th class="no-print">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                const muridKelas = db.murid.filter(m => m.kelasId === k.id);
+                muridKelas.forEach(m => {
+                    html += `
+                        <tr>
+                            <td><input type="text" id="murid-nama-${m.id}" value="${m.nama}"></td>
+                            <td><input type="text" id="murid-ic-${m.id}" value="${m.ic}"></td>
+                            <td><input type="text" id="murid-uid-${m.id}" value="${m.uid}"></td>
+                            <td class="no-print">
+                                <button class="btn btn-success" onclick="simpanMurid(${m.id})"><i class="fas fa-save"></i></button>
+                                <button class="btn btn-warning" onclick="bukaOverride(${m.id})">Edit</button>
+                                <button class="btn btn-danger" onclick="buangMurid(${m.id})"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                container.innerHTML += html + `</tbody></table></div>`;
+            });
+        }
+
+        function simpanGuru() {
+            const db = getDB();
+            const guru = db.gurus.find(g => g.id === currentGuruId);
+            if (guru) {
+                guru.name = document.getElementById('guru-nama').value;
+                guru.phone = document.getElementById('guru-phone').value;
+                guru.email = document.getElementById('guru-email').value;
+                guru.pass = document.getElementById('guru-pass').value;
+                saveDB(db);
+                alert('Profil guru disimpan!');
+            }
+        }
+
+        function buangGuru() {
+            if (confirm('Pasti mahu buang guru ini?')) {
+                const db = getDB();
+                db.gurus = db.gurus.filter(g => g.id !== currentGuruId);
+                db.kelas = db.kelas.filter(k => k.guruId !== currentGuruId);
+                saveDB(db);
+                window.location.href = 'host-urus-data.html';
+            }
+        }
+
+        function tambahKelas() {
+            const nama = document.getElementById('kelas-baru').value;
+            if (nama) {
+                const db = getDB();
+                db.kelas.push({
+                    id: Date.now(),
+                    name: nama,
+                    guruId: currentGuruId
+                });
+                saveDB(db);
+                document.getElementById('kelas-baru').value = '';
+                renderKelas();
+            }
+        }
+
+        function buangKelas(kId) {
+            if (confirm('Buang kelas ini?')) {
+                const db = getDB();
+                db.kelas = db.kelas.filter(k => k.id !== kId);
+                saveDB(db);
+                renderKelas();
+            }
+        }
+
+        function tambahMurid(kId) {
+            const nama = document.getElementById(`add-nama-${kId}`).value;
+            const ic = document.getElementById(`add-ic-${kId}`).value;
+            const uid = document.getElementById(`add-uid-${kId}`).value;
+
+            if (nama && ic) {
+                const db = getDB();
+                db.murid.push({
+                    id: Date.now(),
+                    nama: nama,
+                    ic: ic,
+                    uid: uid,
+                    kelasId: kId,
+                    sejarahKelas: [{ tahun: getCurrentYear(), kelasId: kId }],
+                    kehadiran: []
+                });
+                saveDB(db);
+                renderKelas();
+            }
+        }
+
+        function simpanMurid(mId) {
+            const db = getDB();
+            const murid = db.murid.find(m => m.id === mId);
+            if (murid) {
+                murid.nama = document.getElementById(`murid-nama-${mId}`).value;
+                murid.ic = document.getElementById(`murid-ic-${mId}`).value;
+                murid.uid = document.getElementById(`murid-uid-${mId}`).value;
+                saveDB(db);
+                alert('Murid disimpan!');
+            }
+        }
+
+        function buangMurid(mId) {
+            if (confirm('Buang murid ini?')) {
+                const db = getDB();
+                db.murid = db.murid.filter(m => m.id !== mId);
+                saveDB(db);
+                renderKelas();
+            }
+        }
+
+        // Override functions (simplified)
+        function bukaOverride(mId) {
+            window.location.href = `student-detail.html?id=${mId}`;
+        }
+    </script>
+</body>
+</html>
