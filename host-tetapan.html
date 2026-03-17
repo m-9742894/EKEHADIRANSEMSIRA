@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMSIRA - Host: Tetapan</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .sub-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        button.btn-success { background: var(--success); }
+        button.btn-warning { background: var(--warning); color: black; }
+        button.btn-danger { background: var(--danger); }
+        ul { list-style: none; padding-left: 0; }
+        li { padding: 8px; border-bottom: 1px solid #334155; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links">
+            <a href="dashboard-host.html"><i class="fas fa-arrow-left"></i> Kembali</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h3><i class="fas fa-calendar-alt"></i> Tetapan Sekolah, Masa & Cuti</h3>
+            
+            <div class="grid-3">
+                <!-- Hari Operasi -->
+                <div class="sub-card">
+                    <h4>Jumlah Hari Operasi Semasa</h4>
+                    <input type="number" id="hari-operasi" min="1" max="365">
+                    <button class="btn btn-success" onclick="simpanHari()" style="width:100%;">Simpan Hari</button>
+                </div>
+                
+                <!-- Waktu Operasi -->
+                <div class="sub-card">
+                    <h4 style="color:var(--primary);">Tetapan Waktu Kehadiran</h4>
+                    <label>Buka Kehadiran:</label>
+                    <input type="time" id="waktu-buka">
+                    <label>Mula Lewat:</label>
+                    <input type="time" id="waktu-lewat">
+                    <label>Tutup Kehadiran:</label>
+                    <input type="time" id="waktu-tutup">
+                    <button class="btn btn-warning" onclick="simpanWaktu()" style="width:100%; color:black;">
+                        <i class="fas fa-clock"></i> Simpan Waktu
+                    </button>
+                </div>
+                
+                <!-- Senarai Cuti -->
+                <div class="sub-card">
+                    <h4>Senarai Cuti</h4>
+                    <div style="margin-bottom:15px;">
+                        <input type="date" id="cuti-tarikh" placeholder="Tarikh Cuti">
+                        <input type="text" id="cuti-nama" placeholder="Nama Cuti">
+                        <button class="btn btn-primary" onclick="tambahCuti()" style="width:100%;">Tambah Cuti</button>
+                    </div>
+                    <ul id="senarai-cuti"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { hariOperasi: 10, tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' }, cuti: [] };
+        }
+
+        function saveDB(db) {
+            localStorage.setItem('semsiraDB', JSON.stringify(db));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const db = getDB();
+            document.getElementById('hari-operasi').value = db.hariOperasi;
+            document.getElementById('waktu-buka').value = db.tetapanWaktu.buka;
+            document.getElementById('waktu-lewat').value = db.tetapanWaktu.lewat;
+            document.getElementById('waktu-tutup').value = db.tetapanWaktu.tutup;
+            renderCuti();
+        });
+
+        function renderCuti() {
+            const db = getDB();
+            const ul = document.getElementById('senarai-cuti');
+            ul.innerHTML = '';
+            db.cuti.forEach(c => {
+                ul.innerHTML += `
+                    <li>
+                        ${c.tarikh} - ${c.nama}
+                        <button class="btn btn-danger no-print" style="float:right; padding:2px 5px;" onclick="buangCuti(${c.id})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </li>
+                `;
+            });
+        }
+
+        function simpanHari() {
+            const db = getDB();
+            db.hariOperasi = parseInt(document.getElementById('hari-operasi').value) || 10;
+            saveDB(db);
+            alert('Jumlah hari operasi disimpan!');
+        }
+
+        function simpanWaktu() {
+            const db = getDB();
+            db.tetapanWaktu = {
+                buka: document.getElementById('waktu-buka').value || '06:30',
+                lewat: document.getElementById('waktu-lewat').value || '07:30',
+                tutup: document.getElementById('waktu-tutup').value || '14:00'
+            };
+            saveDB(db);
+            alert('Tetapan waktu disimpan!');
+        }
+
+        function tambahCuti() {
+            const tarikh = document.getElementById('cuti-tarikh').value;
+            const nama = document.getElementById('cuti-nama').value;
+            
+            if (tarikh && nama) {
+                const db = getDB();
+                db.cuti.push({
+                    id: Date.now(),
+                    tarikh: tarikh,
+                    nama: nama
+                });
+                saveDB(db);
+                document.getElementById('cuti-tarikh').value = '';
+                document.getElementById('cuti-nama').value = '';
+                renderCuti();
+            }
+        }
+
+        function buangCuti(id) {
+            const db = getDB();
+            db.cuti = db.cuti.filter(c => c.id !== id);
+            saveDB(db);
+            renderCuti();
+        }
+    </script>
+</body>
+</html>
