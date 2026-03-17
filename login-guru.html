@@ -38,29 +38,92 @@
             <h2>Log Masuk Guru</h2>
             <input type="email" id="login-guru-email" placeholder="E-mel Guru">
             <input type="password" id="login-guru-pass" placeholder="Kata Laluan">
-            <button class="btn" style="width: 100%;" onclick="loginGuru()">Log Masuk</button>
+            <button class="btn" id="btn-login" style="width: 100%;">Log Masuk</button>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxZIDIPRhwXT_1aeS-dKsG2kmuUyJLUlQ",
+            authDomain: "semsirakehadiran.firebaseapp.com",
+            projectId: "semsirakehadiran",
+            storageBucket: "semsirakehadiran.firebasestorage.app",
+            messagingSenderId: "68504541700",
+            appId: "1:68504541700:web:26939e18ed7ae32fe57351",
+            measurementId: "G-QE4862H49Z"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 获取本地数据库
         function getDB() {
             const saved = localStorage.getItem('semsiraDB');
-            return saved ? JSON.parse(saved) : null;
+            return saved ? JSON.parse(saved) : { gurus: [] };
         }
 
-        function loginGuru() {
-            const db = getDB();
+        // 登录逻辑
+        window.loginGuru = async function() {
             const email = document.getElementById('login-guru-email').value;
             const pass = document.getElementById('login-guru-pass').value;
-            const guru = db.gurus.find(x => x.email === email && x.pass === pass);
-            
-            if(guru) { 
-                localStorage.setItem('currentUser', JSON.stringify(guru));
-                window.location.href = 'dashboard-guru.html'; 
-            } else { 
-                alert("Emel atau kata laluan guru salah!");
+
+            if (!email || !pass) {
+                alert("Sila isi e-mel dan kata laluan!");
+                return;
             }
+
+            // 1. 优先尝试本地登录 (保持原有逻辑的速度)
+            const localDB = getDB();
+            let guru = localDB.gurus ? localDB.gurus.find(x => x.email === email && x.pass === pass) : null;
+
+            if (guru) {
+                executeLogin(guru);
+                return;
+            }
+
+            // 2. 本地找不到，尝试从 Firebase 云端同步登录
+            console.log("Checking Cloud Database...");
+            try {
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, `gurus`));
+                
+                if (snapshot.exists()) {
+                    const allGurus = snapshot.val();
+                    // 在 Firebase 返回的对象列表中查找匹配者
+                    const cloudGuru = Object.values(allGurus).find(g => g.email === email && g.pass === pass);
+                    
+                    if (cloudGuru) {
+                        // 登录成功，顺便把该数据同步到本地，方便下次离线使用
+                        if(!localDB.gurus) localDB.gurus = [];
+                        localDB.gurus.push(cloudGuru);
+                        localStorage.setItem('semsiraDB', JSON.stringify(localDB));
+                        
+                        executeLogin(cloudGuru);
+                    } else {
+                        alert("Emel atau kata laluan guru salah!");
+                    }
+                } else {
+                    alert("Tiada data guru ditemui di Cloud.");
+                }
+            } catch (error) {
+                console.error("Cloud Error:", error);
+                alert("Ralat menyambung ke Cloud. Sila semak internet anda.");
+            }
+        };
+
+        function executeLogin(guru) {
+            localStorage.setItem('currentUser', JSON.stringify(guru));
+            alert("Log Masuk Berjaya!");
+            window.location.href = 'dashboard-guru.html';
         }
+
+        // 绑定按钮点击事件
+        document.getElementById('btn-login').onclick = window.loginGuru;
     </script>
 </body>
 </html>
