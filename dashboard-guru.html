@@ -13,627 +13,91 @@
         .hidden { display: none !important; }
         nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); flex-wrap: wrap; gap: 10px;}
         .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 1px; }
-        .nav-links button { background: none; border: none; color: var(--text-main); margin-left: 15px; cursor: pointer; font-size: 1rem; padding: 5px; }
-        .nav-links button:hover { color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; font-size: 1rem; padding: 5px; }
+        .nav-links a:hover { color: var(--primary); }
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
-        .sub-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         button.btn:hover { background: #0284c7; }
         button.btn-danger { background: var(--danger); }
-        button.btn-danger:hover { background: #dc2626; }
-        button.btn-success { background: var(--success); }
-        button.btn-warning { background: var(--warning); color: #000; }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
-        .inline-input { width: auto; display: inline-block; margin-right: 10px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
-        th { color: var(--primary); }
-        .clickable-row:hover { background: rgba(14, 165, 233, 0.1); cursor: pointer; }
-        .clickable-text { color: var(--primary); cursor: pointer; text-decoration: underline; font-weight: bold; }
-        .clickable-text:hover { color: var(--success); }
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index: 1000; }
-        @media print {
-            nav, .btn, .no-print, input[type="date"], input.no-print { display: none !important; }
-            body { background: white; color: black; }
-            .card, .sub-card { background: none; box-shadow: none; border: 1px solid #ccc; color: black; }
-            th, td, p, h2, h3, h4, span { color: black !important; border-color: #ccc; }
-            canvas { max-height: 300px; }
-            input[type="text"], input[type="email"], input[type="number"], select { border: none; background: transparent; color: black; padding: 0; margin: 0; }
-            select { appearance: none; -webkit-appearance: none; font-weight:bold; }
-            .sub-card input, .card input { display: none; }
-            table input[type="text"] { display: inline-block !important; }
-        }
+        .menu-card { text-align: center; padding: 30px 20px; cursor: pointer; transition: transform 0.3s; }
+        .menu-card:hover { transform: scale(1.05); border: 2px solid var(--primary); }
+        .menu-card i { font-size: 3rem; margin-bottom: 15px; color: var(--primary); }
     </style>
 </head>
 <body>
     <nav id="navbar">
         <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
-        <div class="nav-links" id="nav-menus"></div>
+        <div class="nav-links">
+            <span style="color:var(--success);">Cikgu <span id="guru-name-display"></span></span>
+            <a href="index.html" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Keluar</a>
+        </div>
     </nav>
 
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2>Portal Cikgu <span id="guru-name-display" style="color: var(--primary);"></span></h2>
-            <button class="btn btn-danger" onclick="logout()">Log Keluar</button>
-        </div>
+        <h2 style="margin-bottom: 30px;">Portal Cikgu <span style="color: var(--primary);" id="guru-name-header"></span></h2>
         
-        <!-- Menu Profil -->
-        <div id="menu-guru-profil" class="menu-section guru-menu">
-            <div class="card">
-                <h3>Profil Anda</h3>
-                <div class="grid-2" style="margin-top: 15px;">
-                    <div><label>Nama Penuh:</label><input type="text" id="pg-name"></div>
-                    <div><label>Telefon:</label><input type="text" id="pg-phone"></div>
-                    <div><label>E-mel:</label><input type="email" id="pg-email"></div>
-                    <div><label>Kata Laluan:</label><input type="text" id="pg-pass"></div>
-                </div>
-                <button class="btn btn-success no-print" style="margin-top:10px;" onclick="simpanProfilGuru()">
-                    <i class="fas fa-save"></i> Simpan
-                </button>
+        <div class="grid-3">
+            <div class="card menu-card" onclick="window.location.href='guru-profil.html'">
+                <i class="fas fa-user-circle"></i>
+                <h3>Profil</h3>
+                <p>Lihat & kemaskini profil anda</p>
             </div>
-        </div>
-        
-        <!-- Menu Kelas Saya -->
-        <div id="menu-guru-kelassaya" class="menu-section guru-menu hidden">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3><i class="fas fa-chalkboard"></i> Pengurusan Kelas Saya</h3>
-                    <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
-                </div>
-                <div id="pg-kelas-container" style="margin-top: 20px;"></div>
+            
+            <div class="card menu-card" onclick="window.location.href='guru-kelas-saya.html'">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <h3>Kelas Saya</h3>
+                <p>Urus kelas dan murid</p>
             </div>
-        </div>
-
-        <!-- Menu Semua Kelas -->
-        <div id="menu-guru-semuakelas" class="menu-section guru-menu hidden">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                    <h3>Status Kehadiran Mengikut Kelas</h3>
-                    <div>
-                        <input type="date" id="guru-kelas-date" class="no-print" style="width: 200px; margin-right: 10px;" onchange="renderGuruSemuaKelas()">
-                        <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
-                    </div>
-                </div>
-                <div id="guru-semuakelas-grid" class="grid-3"></div>
+            
+            <div class="card menu-card" onclick="window.location.href='guru-kehadiran-kelas.html'">
+                <i class="fas fa-calendar-check"></i>
+                <h3>Kehadiran Kelas</h3>
+                <p>Lihat status kehadiran semua kelas</p>
             </div>
-        </div>
-
-        <!-- Menu Carian -->
-        <div id="menu-guru-carian" class="menu-section guru-menu hidden">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3><i class="fas fa-search"></i> Carian Murid</h3>
-                    <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
-                </div>
-                <div class="grid-2 no-print" style="margin-top: 15px;">
-                    <div><label>Cari Nama / KP:</label><input type="text" id="pg-carian-nama" onkeyup="carianMuridGuru()"></div>
-                    <div><label>Tapis Kelas:</label><select id="pg-carian-kelas" onchange="carianMuridGuru()"></select></div>
-                </div>
-                <table id="pg-jadual-carian" style="margin-top: 20px;">
-                    <thead><tr><th>Nama Murid</th><th>No KP</th><th>Kelas</th><th class="no-print">Tindakan</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+            
+            <div class="card menu-card" onclick="window.location.href='guru-carian-murid.html'">
+                <i class="fas fa-search"></i>
+                <h3>Carian Murid</h3>
+                <p>Cari murid & lihat profil</p>
             </div>
-        </div>
-
-        <!-- Menu Keseluruhan -->
-        <div id="menu-guru-keseluruhan" class="menu-section guru-menu hidden">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>Statistik Keseluruhan</h3>
-                    <div>
-                        <input type="date" id="guru-overall-date" class="no-print" style="width: 200px; margin-right: 10px;" onchange="renderGuruKeseluruhan()">
-                        <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
-                    </div>
-                </div>
-                <div style="height: 300px; margin: 20px 0;">
-                    <canvas id="guruOverallChart"></canvas>
-                </div>
-                <div class="grid-3">
-                    <div class="sub-card"><h4 style="color: var(--success);">Hadir</h4><ul id="guru-list-hadir" style="margin-left:20px; margin-top:10px;"></ul></div>
-                    <div class="sub-card"><h4 style="color: var(--warning);">Lewat</h4><ul id="guru-list-lewat" style="margin-left:20px; margin-top:10px;"></ul></div>
-                    <div class="sub-card"><h4 style="color: var(--danger);">Tidak Hadir</h4><ul id="guru-list-takhadir" style="margin-left:20px; margin-top:10px;"></ul></div>
-                </div>
+            
+            <div class="card menu-card" onclick="window.location.href='guru-keseluruhan.html'">
+                <i class="fas fa-chart-pie"></i>
+                <h3>Keseluruhan</h3>
+                <p>Statistik kehadiran semua murid</p>
             </div>
-        </div>
-
-        <!-- Menu Urus Kehadiran -->
-        <div id="menu-guru-uruskehadiran" class="menu-section guru-menu hidden">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                    <h3><i class="fas fa-user-check"></i> Kehadiran Kelas Saya</h3>
-                    <div>
-                        <input type="date" id="guru-myclass-date" class="no-print" style="width: 200px; margin-right: 10px;" onchange="renderGuruKehadiranKelasSaya()">
-                        <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
-                    </div>
-                </div>
-                <div id="pg-myclass-container"></div>
+            
+            <div class="card menu-card" onclick="window.location.href='guru-kehadiran-saya.html'">
+                <i class="fas fa-user-check"></i>
+                <h3>Kehadiran Kelas Saya</h3>
+                <p>Urus kehadiran kelas anda</p>
             </div>
-        </div>
-
-        <!-- Menu Sejarah -->
-        <div id="menu-guru-sejarah" class="menu-section guru-menu hidden">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3><i class="fas fa-history"></i> Sejarah Keseluruhan Murid</h3>
-                    <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak Laporan</button>
-                </div>
-                <div class="grid-3 no-print" style="margin-top: 15px; background: #0f172a; padding: 15px; border-radius: 8px;">
-                    <div><label>Pilih Tahun:</label><select id="guru-sej-tahun" onchange="paparSejarah('guru')"></select></div>
-                    <div><label>Pilih Kelas:</label><select id="guru-sej-kelas" onchange="paparSejarah('guru')"></select></div>
-                    <div><label>Tarikh Spesifik (Pilihan):</label><input type="date" id="guru-sej-tarikh" onchange="paparSejarah('guru')"></div>
-                </div>
-                <table id="guru-sej-table" style="margin-top: 20px;">
-                    <thead><tr><th>Nama Murid</th><th>No KP</th><th style="color:var(--success);">Hadir</th><th style="color:var(--warning);">Lewat</th><th style="color:var(--danger);">Tidak Hadir</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Override -->
-    <div id="modal-override" class="modal-overlay hidden">
-        <div class="card" style="width: 90%; max-width: 400px; border: 2px solid var(--warning);">
-            <h3 style="color: var(--warning);">Ubah Kehadiran</h3>
-            <p id="ovr-nama" style="font-weight:bold; margin-bottom: 10px;"></p>
-            <input type="hidden" id="ovr-id">
-            <label>Pilih Tarikh:</label>
-            <input type="date" id="ovr-date">
-            <label>Status:</label>
-            <select id="ovr-status">
-                <option value="Hadir">Hadir</option>
-                <option value="Lewat">Lewat</option>
-                <option value="Tak Hadir">Tidak Hadir (Padam Rekod)</option>
-            </select>
-            <label>Masa (Optional):</label>
-            <input type="time" id="ovr-time" value="07:30">
-            <div style="margin-top: 15px; text-align:right;">
-                <button class="btn" onclick="document.getElementById('modal-override').classList.add('hidden')">Batal</button> 
-                <button class="btn btn-warning" onclick="simpanOverride()">Simpan</button>
+            
+            <div class="card menu-card" onclick="window.location.href='guru-sejarah.html'">
+                <i class="fas fa-history"></i>
+                <h3>Sejarah</h3>
+                <p>Sejarah kehadiran mengikut tahun</p>
             </div>
         </div>
     </div>
 
     <script>
-        // Global variables
-        let currentUser = null;
-        let charts = { guruOverall: null };
-
-        // Utility Functions
-        const getLocalSystemDate = () => { 
-            const now = new Date(); 
-            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; 
-        };
-
-        const getCurrentYear = () => { 
-            return new Date().getFullYear().toString(); 
-        };
-
-        function getDB() {
-            const saved = localStorage.getItem('semsiraDB');
-            return saved ? JSON.parse(saved) : { gurus: [], kelas: [], murid: [], hariOperasi: 10, cuti: [], tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' } };
-        }
-
-        function saveDB(db) {
-            localStorage.setItem('semsiraDB', JSON.stringify(db));
-        }
-
-        function logout() { 
+        function logout() {
             localStorage.removeItem('currentUser');
-            window.location.href = 'index.html'; 
         }
-
-        // Navigation
-        function setupGuruNav() { 
-            document.getElementById('nav-menus').innerHTML = `
-                <button onclick="switchMenu('profil')"><i class="fas fa-user"></i> Profil</button>
-                <button onclick="switchMenu('kelassaya')">1. Kelas Saya</button>
-                <button onclick="switchMenu('semuakelas')">2. Kehadiran Kelas</button>
-                <button onclick="switchMenu('carian')">3. Carian Murid</button>
-                <button onclick="switchMenu('keseluruhan')">4. Keseluruhan</button>
-                <button onclick="switchMenu('uruskehadiran')">5. Kehadiran Kelas Saya</button>
-                <button onclick="switchMenu('sejarah')">6. Sejarah</button>
-                <button onclick="logout()" style="color:var(--danger);"><i class="fas fa-sign-out-alt"></i> Keluar</button>
-            `; 
-        }
-
-        function switchMenu(menuId) {
-            document.querySelectorAll('.guru-menu').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`menu-guru-${menuId}`).classList.remove('hidden');
-            
-            if(menuId === 'profil') renderGuruProfil();
-            if(menuId === 'kelassaya') renderGuruKelasSaya();
-            if(menuId === 'semuakelas') { 
-                document.getElementById('guru-kelas-date').value = getLocalSystemDate(); 
-                renderGuruSemuaKelas(); 
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                const user = JSON.parse(savedUser);
+                document.getElementById('guru-name-display').innerText = user.name || '';
+                document.getElementById('guru-name-header').innerText = user.name || '';
+            } else {
+                window.location.href = 'login-guru.html';
             }
-            if(menuId === 'carian') renderCarianGuruMenu();
-            if(menuId === 'keseluruhan') { 
-                document.getElementById('guru-overall-date').value = getLocalSystemDate(); 
-                renderGuruKeseluruhan(); 
-            }
-            if(menuId === 'uruskehadiran') { 
-                document.getElementById('guru-myclass-date').value = getLocalSystemDate(); 
-                renderGuruKehadiranKelasSaya(); 
-            }
-            if(menuId === 'sejarah') renderDropdownSejarah();
-        }
-
-        // Profil Functions
-        function renderGuruProfil() { 
-            document.getElementById('pg-name').value = currentUser?.name || '';
-            document.getElementById('pg-phone').value = currentUser?.phone || '';
-            document.getElementById('pg-email').value = currentUser?.email || '';
-            document.getElementById('pg-pass').value = currentUser?.pass || '';
-        }
-
-        function simpanProfilGuru() { 
-            if (!currentUser) return;
-            
-            currentUser.name = document.getElementById('pg-name').value;
-            currentUser.phone = document.getElementById('pg-phone').value;
-            currentUser.email = document.getElementById('pg-email').value;
-            currentUser.pass = document.getElementById('pg-pass').value;
-            
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            const db = getDB();
-            const guruIndex = db.gurus.findIndex(g => g.id === currentUser.id);
-            if (guruIndex !== -1) {
-                db.gurus[guruIndex] = currentUser;
-                saveDB(db);
-            }
-            
-            document.getElementById('guru-name-display').innerText = currentUser.name;
-            alert("Profil berjaya dikemaskini!"); 
-        }
-
-        // Kelas Functions
-        function renderGuruKelasSaya() { 
-            const container = document.getElementById('pg-kelas-container'); 
-            container.innerHTML = ''; 
-            
-            const db = getDB();
-            const kelasGuru = db.kelas.filter(k => k.guruId === currentUser?.id); 
-            
-            if(kelasGuru.length === 0) { 
-                container.innerHTML = `
-                    <p style="color:var(--warning); margin-bottom:10px;">Anda belum mempunyai kelas.</p>
-                    <input type="text" id="pg-add-kelas-name" class="inline-input no-print" placeholder="Masukkan Nama Kelas (Cth: 5 Sains)">
-                    <button class="btn btn-success no-print" onclick="pgTambahKelas()">Tambah Kelas</button>
-                `; 
-                return; 
-            } 
-            
-            kelasGuru.forEach(k => { 
-                let html = `
-                    <div class="sub-card">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <div style="display:flex; align-items:center;">
-                                <input type="text" id="pg-edit-kelas-${k.id}" value="${k.name}" class="inline-input" style="font-size:1.2rem; font-weight:bold; color:var(--primary); width:200px;">
-                                <button class="btn no-print" style="padding: 5px 10px;" onclick="pgSimpanNamaKelas(${k.id})">
-                                    <i class="fas fa-save"></i>
-                                </button>
-                            </div>
-                            <button class="btn btn-danger no-print" onclick="pgBuangKelas(${k.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="no-print" style="background:#0f172a; padding:15px; border-radius:5px; margin-bottom:15px; border:1px dashed var(--primary);">
-                            <input type="text" id="pg-add-m-n-${k.id}" class="inline-input" placeholder="Nama Penuh">
-                            <input type="text" id="pg-add-m-ic-${k.id}" class="inline-input" placeholder="No IC">
-                            <input type="text" id="pg-add-m-u-${k.id}" class="inline-input" placeholder="UID">
-                            <button class="btn btn-success" onclick="pgTambahMurid(${k.id})">Tambah</button>
-                        </div>
-                        
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Nama</th>
-                                    <th>IC</th>
-                                    <th>UID</th>
-                                    <th class="no-print">Tindakan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `; 
-                
-                const muridKelas = db.murid.filter(m => m.kelasId === k.id); 
-                
-                if(muridKelas.length === 0) { 
-                    html += `<tr><td colspan="4" style="text-align:center;">Belum ada murid.</td></tr>`; 
-                } else { 
-                    muridKelas.forEach(m => { 
-                        html += `
-                            <tr>
-                                <td><input type="text" id="pg-em-n-${m.id}" value="${m.nama}"></td>
-                                <td><input type="text" id="pg-em-ic-${m.id}" value="${m.ic}"></td>
-                                <td><input type="text" id="pg-em-u-${m.id}" value="${m.uid}"></td>
-                                <td class="no-print">
-                                    <button class="btn btn-success" onclick="pgSimpanMurid(${m.id})"><i class="fas fa-save"></i></button>
-                                    <button class="btn btn-danger" onclick="pgBuangMurid(${m.id})"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                        `; 
-                    }); 
-                } 
-                
-                container.innerHTML += html + `</tbody></table></div>`; 
-            }); 
-        }
-
-        function pgTambahKelas() { 
-            const name = document.getElementById('pg-add-kelas-name')?.value; 
-            if(name) { 
-                const db = getDB();
-                db.kelas.push({
-                    id: Date.now(), 
-                    name: name, 
-                    guruId: currentUser?.id
-                }); 
-                saveDB(db);
-                renderGuruKelasSaya(); 
-            } 
-        }
-
-        function pgSimpanNamaKelas(kId) { 
-            const db = getDB();
-            const kelas = db.kelas.find(x => x.id === kId); 
-            if (kelas) {
-                kelas.name = document.getElementById(`pg-edit-kelas-${kId}`).value; 
-                saveDB(db);
-                alert("Nama kelas disimpan!"); 
-            }
-        }
-
-        function pgBuangKelas(kId) { 
-            if(confirm("Pasti mahu buang?")) { 
-                const db = getDB();
-                db.kelas = db.kelas.filter(x => x.id !== kId); 
-                db.murid = db.murid.filter(x => x.kelasId !== kId); 
-                saveDB(db);
-                renderGuruKelasSaya(); 
-            } 
-        }
-
-        function pgTambahMurid(kId) { 
-            const name = document.getElementById(`pg-add-m-n-${kId}`)?.value;
-            const ic = document.getElementById(`pg-add-m-ic-${kId}`)?.value;
-            const uid = document.getElementById(`pg-add-m-u-${kId}`)?.value || '';
-            
-            if(name && ic) { 
-                const db = getDB();
-                db.murid.push({
-                    id: Date.now(), 
-                    nama: name, 
-                    ic: ic, 
-                    uid: uid, 
-                    kelasId: kId, 
-                    sejarahKelas: [{tahun: getCurrentYear(), kelasId: kId}], 
-                    kehadiran: []
-                }); 
-                saveDB(db);
-                renderGuruKelasSaya(); 
-            } 
-        }
-
-        function pgSimpanMurid(mId) { 
-            const db = getDB();
-            const murid = db.murid.find(x => x.id === mId);
-            if (!murid) return;
-            
-            murid.nama = document.getElementById(`pg-em-n-${mId}`).value; 
-            murid.ic = document.getElementById(`pg-em-ic-${mId}`).value; 
-            murid.uid = document.getElementById(`pg-em-u-${mId}`).value; 
-            
-            saveDB(db);
-            alert("Maklumat murid disimpan!"); 
-        }
-
-        function pgBuangMurid(mId) { 
-            if(confirm("Pasti?")) { 
-                const db = getDB();
-                db.murid = db.murid.filter(x => x.id !== mId); 
-                saveDB(db);
-                renderGuruKelasSaya(); 
-            } 
-        }
-
-        // Semua Kelas
-        function renderGuruSemuaKelas() { 
-            const container = document.getElementById('guru-semuakelas-grid'); 
-            container.innerHTML = ''; 
-            
-            const db = getDB();
-            const date = document.getElementById('guru-kelas-date').value || getLocalSystemDate(); 
-            
-            db.kelas.forEach(k => { 
-                const mk = db.murid.filter(m => m.kelasId === k.id); 
-                let h = 0; 
-                mk.forEach(m => { 
-                    if(m.kehadiran.some(r => r.tarikh === date)) h++; 
-                }); 
-                const prct = mk.length === 0 ? 0 : Math.round((h/mk.length)*100); 
-                
-                container.innerHTML += `
-                    <div class="card clickable-row" style="text-align:center; border: 1px solid var(--primary);" onclick="window.location.href='class-detail.html?id=${k.id}&date=${date}'">
-                        <h2 style="color:var(--primary);">${k.name}</h2>
-                        <div style="font-size:2rem; font-weight:bold; margin: 10px 0;">${prct}%</div>
-                        <p>Hadir: ${h}/${mk.length}</p>
-                    </div>
-                `; 
-            }); 
-        }
-
-        // Carian
-        function renderCarianGuruMenu() { 
-            const selectKelas = document.getElementById('pg-carian-kelas'); 
-            selectKelas.innerHTML = '<option value="">Semua Kelas</option>'; 
-            
-            const db = getDB();
-            db.kelas.forEach(k => { 
-                selectKelas.innerHTML += `<option value="${k.id}">${k.name}</option>`; 
-            }); 
-            carianMuridGuru(); 
-        }
-
-        function carianMuridGuru() { 
-            const teksCarian = document.getElementById('pg-carian-nama').value.toLowerCase(); 
-            const idKelas = document.getElementById('pg-carian-kelas').value; 
-            const jadual = document.querySelector('#pg-jadual-carian tbody'); 
-            jadual.innerHTML = ''; 
-            
-            const db = getDB();
-            let hasilCarian = db.murid.filter(m => { 
-                let padanNamaIC = m.nama.toLowerCase().includes(teksCarian) || m.ic.includes(teksCarian); 
-                let padanKelas = idKelas === "" ? true : (m.kelasId.toString() === idKelas); 
-                return padanNamaIC && padanKelas; 
-            }); 
-            
-            if (hasilCarian.length === 0) { 
-                jadual.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tiada rekod.</td></tr>'; 
-                return; 
-            } 
-            
-            hasilCarian.forEach(m => { 
-                const k = db.kelas.find(x => x.id === m.kelasId); 
-                jadual.innerHTML += `
-                    <tr class="clickable-row">
-                        <td>${m.nama}</td>
-                        <td>${m.ic}</td>
-                        <td>${k ? k.name : '-'}</td>
-                        <td class="no-print">
-                            <button class="btn btn-primary" onclick="window.location.href='student-detail.html?id=${m.id}'">
-                                <i class="fas fa-eye"></i> Profil
-                            </button>
-                        </td>
-                    </tr>
-                `; 
-            }); 
-        }
-
-        // Keseluruhan
-        function renderGuruKeseluruhan() { 
-            const db = getDB();
-            const date = document.getElementById('guru-overall-date').value || getLocalSystemDate(); 
-            
-            let h = 0, l = 0, th = 0; 
-            let lstH = [], lstL = [], lstTH = []; 
-            
-            db.murid.forEach(m => { 
-                const r = m.kehadiran.find(x => x.tarikh === date); 
-                if(r) { 
-                    if(r.status === 'Lewat') { 
-                        l++; 
-                        lstL.push(`<li><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></li>`); 
-                    } else { 
-                        h++; 
-                        lstH.push(`<li><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></li>`); 
-                    } 
-                } else { 
-                    th++; 
-                    lstTH.push(`<li><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></li>`); 
-                } 
-            }); 
-            
-            const canvas = document.getElementById('guruOverallChart');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                if(charts.guruOverall) charts.guruOverall.destroy(); 
-                
-                charts.guruOverall = new Chart(ctx, { 
-                    type: 'bar', 
-                    data: {
-                        labels: ['Hadir', 'Lewat', 'Tak Hadir'], 
-                        datasets: [{
-                            data: [h, l, th], 
-                            backgroundColor: ['#22c55e', '#f59e0b', '#ef4444']
-                        }]
-                    }, 
-                    options: {
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        plugins: { legend: { display: false } }, 
-                        scales: {
-                            y: { ticks: { color: '#fff', stepSize: 1 } }, 
-                            x: { ticks: { color: '#fff' } }
-                        }
-                    }
-                });
-            }
-            
-            document.getElementById('guru-list-hadir').innerHTML = lstH.join('') || 'Tiada'; 
-            document.getElementById('guru-list-lewat').innerHTML = lstL.join('') || 'Tiada'; 
-            document.getElementById('guru-list-takhadir').innerHTML = lstTH.join('') || 'Tiada'; 
-        }
-
-        // Kehadiran Kelas Saya
-        function renderGuruKehadiranKelasSaya() { 
-            const container = document.getElementById('pg-myclass-container'); 
-            container.innerHTML = ''; 
-            
-            const db = getDB();
-            const date = document.getElementById('guru-myclass-date').value || getLocalSystemDate(); 
-            
-            if (!currentUser) return;
-            
-            const kelasGuru = db.kelas.filter(k => k.guruId === currentUser.id); 
-            
-            if(kelasGuru.length === 0) { 
-                container.innerHTML = '<p style="color:var(--warning);">Tiada kelas didaftarkan.</p>'; 
-                return; 
-            } 
-            
-            kelasGuru.forEach(k => { 
-                const mk = db.murid.filter(m => m.kelasId === k.id); 
-                let html = `
-                    <div class="sub-card">
-                        <h4 style="font-size:1.5rem; color:var(--primary); margin-bottom:15px;">${k.name}</h4>
-                        <table style="background:var(--panel-bg); width: 100%;">
-                            <thead>
-                                <tr>
-                                    <th>Nama Murid</th>
-                                    <th>Status Kehadiran</th>
-                                    <th class="no-print">Tindakan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `; 
-                
-                if(mk.length === 0) { 
-                    html += `<tr><td colspan="3" style="text-align:center;">Tiada murid.</td></tr>`; 
-                } else { 
-                    mk.forEach(m => { 
-                        const r = m.kehadiran.find(x => x.tarikh === date); 
-                        let statT = r ? r.status : 'Belum Hadir'; 
-                        let statC = 'var(--danger)'; 
-                        
-                        if(r && r.status === 'Hadir') statC = 'var(--success)'; 
-                        if(r && r.status === 'Lewat') statC = 'var(--warning)'; 
-                        
-                        html += `
-                            <tr>
-                                <td><span class="clickable-text" onclick="window.location.href='student-detail.html?id=${m.id}'">${m.nama}</span></td>
-                                <td style="color:${statC}; font-weight: bold;">${statT}</td>
-                                <td class="no-print">
-                                    <button class="btn btn-warning" style="color:black; font-size: 0.8rem;" onclick="bukaOverride(${m.id})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                </td>
-                            </tr>
-                        `; 
-                    }); 
-                } 
-                
-                container.innerHTML += html + `</tbody></table></div>`; 
-            }); 
-        }
-
-        // Sejarah
-        function renderDropdownSejarah() { 
-            const db = getDB();
-            const tahunEl = document.getElementById('guru
+        });
+    </script>
+</body>
+</html>
