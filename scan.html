@@ -7,18 +7,102 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); }
-        .hidden { display: none !important; }
-        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
-        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); letter-spacing: 1px; }
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
-        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button.btn:hover { background: #0284c7; }
-        button.btn-success { background: var(--success); }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
+        :root { 
+            --bg-color: #0f172a; 
+            --panel-bg: #1e293b; 
+            --primary: #0ea5e9; 
+            --success: #22c55e; 
+            --danger: #ef4444; 
+            --warning: #f59e0b; 
+            --text-main: #f8fafc; 
+            --text-muted: #94a3b8; 
+        }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+        }
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+        }
+        .hidden { 
+            display: none !important; 
+        }
+        nav { 
+            background-color: var(--panel-bg); 
+            padding: 15px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--primary); 
+        }
+        .nav-brand { 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            letter-spacing: 1px; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 30px auto; 
+            padding: 0 20px; 
+        }
+        .card { 
+            background: var(--panel-bg); 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+            margin-bottom: 20px; 
+        }
+        button.btn { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.3s; 
+        }
+        button.btn:hover { 
+            background: #0284c7; 
+        }
+        button.btn-success { 
+            background: var(--success); 
+        }
+        input { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            border: 1px solid #334155; 
+            background: #0f172a; 
+            color: white; 
+            font-size: 1rem; 
+        }
+        .scan-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .rfid-input {
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        .success-message {
+            color: var(--success);
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: var(--danger);
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+        @media print {
+            .no-print { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -30,29 +114,72 @@
         <button class="btn no-print" onclick="window.location.href='index.html'">
             <i class="fas fa-arrow-left"></i> Kembali
         </button>
-        <div class="card" style="text-align: center; padding: 50px 20px;">
-            <i id="scan-buka-icon" class="fas fa-wifi" style="font-size: 5rem; color: var(--primary); margin-bottom: 20px;"></i>
-            <h2 id="scan-title">SILA IMBAS KAD RFID</h2>
-            <p id="scan-sub" style="color: var(--text-muted); margin-bottom: 20px;">Pastikan masa komputer selari dengan Waktu Malaysia.</p>
-            <input type="text" id="rfid-listener" style="width: 50%; max-width: 400px; text-align: center; font-size: 1.5rem; border: 2px solid var(--primary);" placeholder="UID RFID" onkeydown="handleScanInput(event)" autocomplete="off">
-            <div id="scan-tutup-msg" class="hidden"></div>
-            <div id="scan-result" class="hidden" style="margin-top: 20px; padding: 20px; background: #0f172a; border-radius: 10px;">
-                <h2 id="scan-name" style="color:var(--primary);"></h2>
-                <p id="scan-status-text" style="font-weight:bold; font-size:1.5rem; margin-top:10px;"></p>
+        
+        <div class="card" style="text-align: center; padding: 40px 20px;">
+            <div class="scan-container">
+                <!-- Ikon dan Tajuk -->
+                <i id="scan-buka-icon" class="fas fa-wifi" style="font-size: 5rem; color: var(--primary); margin-bottom: 20px;"></i>
+                <h2 id="scan-title">SILA IMBAS KAD RFID</h2>
+                <p id="scan-sub" style="color: var(--text-muted); margin-bottom: 30px;">
+                    <i class="fas fa-info-circle"></i> Dekatkan kad dengan pembaca RFID<br>
+                    <small>Pastikan masa komputer selari dengan Waktu Malaysia</small>
+                </p>
+
+                <!-- Input RFID (Auto Focus) -->
+                <input type="text" 
+                       id="rfid-listener" 
+                       class="rfid-input"
+                       style="width: 100%; max-width: 400px; margin: 0 auto; text-align: center; font-size: 1.5rem; border: 2px solid var(--primary);" 
+                       placeholder="Menunggu kad RFID..." 
+                       autocomplete="off"
+                       readonly>
+
+                <!-- Manual Input Button (Optional) -->
+                <button class="btn no-print" id="btn-manual" style="margin-top: 15px;" onclick="toggleManualInput()">
+                    <i class="fas fa-keyboard"></i> Input Manual
+                </button>
+
+                <!-- Hidden Manual Input (untuk debugging) -->
+                <div id="manual-input-container" style="display: none; margin-top: 20px;">
+                    <input type="text" id="manual-uid" placeholder="Taip UID kad" style="width: 300px; margin: 0 auto;">
+                    <button class="btn btn-success" onclick="processManualUID()">Hantar</button>
+                </div>
+
+                <!-- Message for Holiday -->
+                <div id="scan-tutup-msg" class="hidden"></div>
+
+                <!-- Scan Result -->
+                <div id="scan-result" class="hidden" style="margin-top: 30px; padding: 25px; background: #0f172a; border-radius: 15px; border: 2px solid var(--primary);">
+                    <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--success); margin-bottom: 15px;"></i>
+                    <h2 id="scan-name" style="color: var(--primary); font-size: 2rem; margin-bottom: 10px;"></h2>
+                    <p id="scan-status-text" style="font-weight: bold; font-size: 2rem; margin-top: 10px;"></p>
+                    <p id="scan-time" style="color: var(--text-muted); margin-top: 10px;"></p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Buffer untuk mengumpul input dari NFC reader
+        let scanBuffer = '';
+        let scanTimer = null;
+        let currentUser = null;
+
+        // Database functions
         function getDB() {
             const saved = localStorage.getItem('semsiraDB');
-            return saved ? JSON.parse(saved) : { cuti: [], murid: [], tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' } };
+            return saved ? JSON.parse(saved) : { 
+                cuti: [], 
+                murid: [], 
+                tetapanWaktu: { buka: '06:30', lewat: '07:30', tutup: '14:00' } 
+            };
         }
 
         function saveDB(db) {
             localStorage.setItem('semsiraDB', JSON.stringify(db));
         }
 
+        // Utility functions
         const getLocalSystemDate = () => { 
             const now = new Date(); 
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; 
@@ -63,121 +190,296 @@
             return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`; 
         };
 
+        const getLocalSystemTimeFormatted = () => {
+            const now = new Date();
+            return now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        };
+
+        // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             const db = getDB();
             const today = getLocalSystemDate();
             const cutiHariIni = db.cuti.find(c => c.tarikh === today);
+            
             const rfidInput = document.getElementById('rfid-listener');
             const scanBukaIcon = document.getElementById('scan-buka-icon');
             const scanTitle = document.getElementById('scan-title');
             const scanSub = document.getElementById('scan-sub');
             const scanResult = document.getElementById('scan-result');
             const scanTutupMsg = document.getElementById('scan-tutup-msg');
+            const btnManual = document.getElementById('btn-manual');
             
             if(cutiHariIni) { 
-                if (rfidInput) rfidInput.classList.add('hidden'); 
-                if (scanBukaIcon) scanBukaIcon.classList.add('hidden'); 
-                if (scanTitle) scanTitle.classList.add('hidden'); 
-                if (scanResult) scanResult.classList.add('hidden'); 
-                if (scanSub) scanSub.classList.add('hidden'); 
+                // Holiday mode
+                rfidInput.classList.add('hidden');
+                scanBukaIcon.classList.add('hidden');
+                scanTitle.classList.add('hidden');
+                scanResult.classList.add('hidden');
+                scanSub.classList.add('hidden');
+                btnManual.classList.add('hidden');
                 
-                if (scanTutupMsg) {
-                    scanTutupMsg.innerHTML = `
-                        <i class="fas fa-calendar-times" style="font-size: 5rem; color: var(--danger); margin-bottom: 20px;"></i>
-                        <h2 style="color: var(--danger);">MAAF, RFID DITUTUP</h2>
-                        <h3 style="margin-top:10px; color: var(--warning);">BAGI CUTI: ${cutiHariIni.nama.toUpperCase()}</h3>
-                    `; 
-                    scanTutupMsg.classList.remove('hidden'); 
-                }
+                scanTutupMsg.innerHTML = `
+                    <i class="fas fa-calendar-times" style="font-size: 5rem; color: var(--danger); margin-bottom: 20px;"></i>
+                    <h2 style="color: var(--danger); font-size: 2rem;">MAAF, RFID DITUTUP</h2>
+                    <h3 style="margin-top: 10px; color: var(--warning); font-size: 1.5rem;">BAGI CUTI: ${cutiHariIni.nama.toUpperCase()}</h3>
+                `; 
+                scanTutupMsg.classList.remove('hidden'); 
             } else { 
-                if (rfidInput) {
-                    rfidInput.classList.remove('hidden'); 
-                    setTimeout(() => rfidInput.focus(), 100); 
-                }
-                if (scanBukaIcon) scanBukaIcon.classList.remove('hidden'); 
-                if (scanTitle) scanTitle.classList.remove('hidden'); 
-                if (scanSub) scanSub.classList.remove('hidden'); 
-                if (scanTutupMsg) scanTutupMsg.classList.add('hidden'); 
+                // Normal mode - Setup NFC reader
+                rfidInput.classList.remove('hidden');
+                scanBukaIcon.classList.remove('hidden');
+                scanTitle.classList.remove('hidden');
+                scanSub.classList.remove('hidden');
+                scanTutupMsg.classList.add('hidden');
+                btnManual.classList.remove('hidden');
+
+                // Fokus pada input (penting untuk NFC reader)
+                setTimeout(() => {
+                    rfidInput.focus();
+                }, 500);
+
+                // Setup event listeners untuk NFC reader
+                setupNFCHandlers();
             } 
         });
 
-        function handleScanInput(e) { 
-            if(e.key === 'Enter' && e.target.value.trim()){ 
-                processRFID(e.target.value); 
-            } 
+        // Setup handlers untuk NFC reader
+        function setupNFCHandlers() {
+            const rfidInput = document.getElementById('rfid-listener');
+
+            // Reset buffer secara berkala
+            setInterval(() => {
+                if (scanBuffer.length > 0) {
+                    console.log('Buffer timeout - resetting');
+                    scanBuffer = '';
+                }
+            }, 2000);
+
+            // Listen for key events
+            document.addEventListener('keydown', handleKeyDown);
+            
+            // Also listen to input events (untuk compatibility)
+            rfidInput.addEventListener('input', function(e) {
+                // Some NFC readers trigger input events instead of keydown
+                const value = e.target.value;
+                if (value && value.length > 0) {
+                    scanBuffer += value;
+                    this.value = ''; // Clear immediately
+                    
+                    // Check if we have a complete UID (usually ends with newline)
+                    if (scanBuffer.includes('\n') || scanBuffer.includes('\r')) {
+                        const uid = scanBuffer.replace(/[\n\r]/g, '').trim();
+                        if (uid.length > 0) {
+                            processRFID(uid);
+                        }
+                        scanBuffer = '';
+                    }
+                }
+            });
         }
 
-        function processRFID(uid) { 
-            const db = getDB();
-            const today = getLocalSystemDate(); 
-            const rfidInput = document.getElementById('rfid-listener'); 
+        // Handle keydown events
+        function handleKeyDown(e) {
+            const rfidInput = document.getElementById('rfid-listener');
             
-            if(db.cuti.find(c => c.tarikh === today)) { 
-                alert("Sistem ditutup untuk hari cuti."); 
-                if (rfidInput) {
-                    rfidInput.value = ''; 
-                    rfidInput.focus(); 
+            // Pastikan input dalam keadaan fokus
+            if (document.activeElement !== rfidInput) {
+                rfidInput.focus();
+            }
+
+            // Ignore if input is readonly
+            if (rfidInput.readOnly) return;
+
+            // Handle Enter key
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                if (scanBuffer.length > 0) {
+                    // Process the collected UID
+                    const uid = scanBuffer.trim();
+                    processRFID(uid);
+                    scanBuffer = '';
                 }
+                return;
+            }
+
+            // Collect input (ignore special keys)
+            if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                e.preventDefault();
+                scanBuffer += e.key;
+                
+                // Visual feedback (optional)
+                rfidInput.value = '█'.repeat(Math.min(scanBuffer.length, 20));
+                
+                // Reset timer
+                if (scanTimer) {
+                    clearTimeout(scanTimer);
+                }
+                
+                // Auto-process after short delay (in case reader doesn't send Enter)
+                scanTimer = setTimeout(() => {
+                    if (scanBuffer.length > 0) {
+                        console.log('Auto-processing after delay');
+                        processRFID(scanBuffer.trim());
+                        scanBuffer = '';
+                        rfidInput.value = '';
+                    }
+                }, 300);
+            }
+        }
+
+        // Toggle manual input mode
+        function toggleManualInput() {
+            const manualContainer = document.getElementById('manual-input-container');
+            const rfidInput = document.getElementById('rfid-listener');
+            const btnManual = document.getElementById('btn-manual');
+            
+            if (manualContainer.style.display === 'none') {
+                manualContainer.style.display = 'block';
+                rfidInput.readOnly = true;
+                btnManual.innerHTML = '<i class="fas fa-times"></i> Tutup Manual';
+                document.getElementById('manual-uid').focus();
+            } else {
+                manualContainer.style.display = 'none';
+                rfidInput.readOnly = false;
+                btnManual.innerHTML = '<i class="fas fa-keyboard"></i> Input Manual';
+                rfidInput.focus();
+            }
+        }
+
+        // Process manual UID input
+        function processManualUID() {
+            const uid = document.getElementById('manual-uid').value.trim();
+            if (uid) {
+                processRFID(uid);
+                document.getElementById('manual-uid').value = '';
+                toggleManualInput(); // Close manual input
+            } else {
+                alert('Sila masukkan UID kad');
+            }
+        }
+
+        // Main RFID processing function
+        function processRFID(uid) {
+            const db = getDB();
+            const today = getLocalSystemDate();
+            const currentTime = getLocalSystemTime();
+            const rfidInput = document.getElementById('rfid-listener');
+            
+            console.log('Processing UID:', uid); // Debug
+
+            // Check holiday
+            if(db.cuti.find(c => c.tarikh === today)) { 
+                showMessage("Sistem ditutup untuk hari cuti.", "error");
+                resetInput();
                 return; 
             } 
             
+            // Check time restrictions
             const now = new Date(); 
-            const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const currentTimeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
             
-            if (currentTime < db.tetapanWaktu.buka) {
-                alert("Sistem kehadiran belum dibuka. Waktu buka: " + db.tetapanWaktu.buka);
-                if (rfidInput) {
-                    rfidInput.value = ''; 
-                    rfidInput.focus(); 
-                }
+            if (currentTimeStr < db.tetapanWaktu.buka) {
+                showMessage("Sistem kehadiran belum dibuka. Waktu buka: " + db.tetapanWaktu.buka, "error");
+                resetInput();
                 return;
             }
 
-            if (currentTime > db.tetapanWaktu.tutup) {
-                alert("Sistem kehadiran telah ditutup pada: " + db.tetapanWaktu.tutup);
-                if (rfidInput) {
-                    rfidInput.value = ''; 
-                    rfidInput.focus(); 
-                }
+            if (currentTimeStr > db.tetapanWaktu.tutup) {
+                showMessage("Sistem kehadiran telah ditutup pada: " + db.tetapanWaktu.tutup, "error");
+                resetInput();
                 return;
             }
 
-            let stat = (currentTime > db.tetapanWaktu.lewat) ? 'Lewat' : 'Hadir';
+            // Determine status (Hadir/Lewat)
+            let status = (currentTimeStr > db.tetapanWaktu.lewat) ? 'Lewat' : 'Hadir';
 
-            if (rfidInput) {
-                rfidInput.value = ''; 
-                setTimeout(() => rfidInput.focus(), 50); 
-            }
+            // Clean UID
+            const cleanUID = uid.trim().toUpperCase();
             
-            const cleanUID = uid.trim().toUpperCase(); 
-            const murid = db.murid.find(x => x.uid.toUpperCase() === cleanUID); 
+            // Find student
+            const murid = db.murid.find(x => x.uid && x.uid.toUpperCase() === cleanUID); 
             
             if(murid) { 
+                // Check existing attendance
                 let attendance = murid.kehadiran.find(x => x.tarikh === today); 
+                let displayStatus = status;
+                
                 if(!attendance) { 
-                    murid.kehadiran.push({tarikh: today, status: stat, masa: getLocalSystemTime()}); 
+                    // New attendance
+                    murid.kehadiran.push({
+                        tarikh: today, 
+                        status: status, 
+                        masa: currentTime
+                    }); 
                     saveDB(db);
+                    displayStatus = status;
                 } else { 
-                    stat = attendance.status;
+                    // Already recorded
+                    displayStatus = attendance.status;
                 } 
                 
-                const scanName = document.getElementById('scan-name');
-                const scanStatus = document.getElementById('scan-status-text');
-                const scanResult = document.getElementById('scan-result');
+                // Display success message
+                displayScanResult(murid.nama, displayStatus, currentTime);
                 
-                if (scanName) scanName.innerText = murid.nama; 
-                if (scanStatus) {
-                    scanStatus.innerText = stat; 
-                    scanStatus.style.color = stat === 'Lewat' ? 'var(--warning)' : 'var(--success)'; 
-                }
-                if (scanResult) {
-                    scanResult.classList.remove('hidden'); 
-                    setTimeout(() => scanResult.classList.add('hidden'), 3000); 
-                }
             } else { 
-                alert("Kad Tidak Dikenali! Sila daftarkan UID kad ini terlebih dahulu."); 
+                // UID not found
+                showMessage("Kad Tidak Dikenali! Sila daftarkan UID kad ini terlebih dahulu.", "error");
             } 
+            
+            // Reset input
+            resetInput();
         }
+
+        // Reset input field and buffer
+        function resetInput() {
+            const rfidInput = document.getElementById('rfid-listener');
+            scanBuffer = '';
+            if (rfidInput) {
+                rfidInput.value = '';
+                setTimeout(() => rfidInput.focus(), 100);
+            }
+            if (scanTimer) {
+                clearTimeout(scanTimer);
+            }
+        }
+
+        // Display scan result
+        function displayScanResult(nama, status, masa) {
+            const scanResult = document.getElementById('scan-result');
+            const scanName = document.getElementById('scan-name');
+            const scanStatus = document.getElementById('scan-status-text');
+            const scanTime = document.getElementById('scan-time');
+            
+            scanName.innerText = nama;
+            scanStatus.innerText = status;
+            scanStatus.style.color = status === 'Lewat' ? 'var(--warning)' : 'var(--success)';
+            scanTime.innerHTML = `<i class="fas fa-clock"></i> ${masa}`;
+            
+            scanResult.classList.remove('hidden');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                scanResult.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Show message (alert or custom)
+        function showMessage(msg, type) {
+            if (type === 'error') {
+                alert(msg);
+            } else {
+                alert(msg);
+            }
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            document.removeEventListener('keydown', handleKeyDown);
+            if (scanTimer) {
+                clearTimeout(scanTimer);
+            }
+        });
     </script>
 </body>
 </html>
