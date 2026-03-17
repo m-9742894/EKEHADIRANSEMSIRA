@@ -15,6 +15,7 @@
         .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
         button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
         button.btn:hover { background: #0284c7; }
+        button.btn:disabled { background: #334155; cursor: not-allowed; }
         input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; }
     </style>
 </head>
@@ -32,58 +33,51 @@
             <input type="text" id="reg-name" placeholder="Nama Penuh">
             <input type="text" id="reg-phone" placeholder="Nombor Telefon">
             <input type="email" id="reg-email" placeholder="Alamat E-mel">
-            <input type="password" id="reg-pass" placeholder="Kata Laluan">
-            <button class="btn" id="main-btn" onclick="registerGuru()">Daftar</button>
+            <input type="password" id="reg-pass" placeholder="Kata Laluan (Min 6 aksara)">
+            <button class="btn" id="btn-submit" onclick="handleSignUp()">Daftar Sekarang</button>
         </div>
     </div>
 
     <script>
-        window.registerGuru = function() {
-            console.log("Button clicked!");
-            const name = document.getElementById('reg-name').value;
-            const phone = document.getElementById('reg-phone').value;
+        // UI 逻辑
+        window.handleSignUp = function() {
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-pass').value;
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
 
-            if (!name || !email || !pass) {
-                alert("Sila isi maklumat yang diperlukan (Nama, Emel, Kata Laluan)!");
+            if (!email || !pass || !name) {
+                alert("Sila isi Nama, Emel, dan Kata Laluan!");
                 return;
             }
 
-            const newGuru = {
-                id: Date.now(),
-                name: name,
-                phone: phone,
-                email: email,
-                pass: pass
-            };
+            if (pass.length < 6) {
+                alert("Kata laluan mesti sekurang-kurangnya 6 aksara!");
+                return;
+            }
 
-            // 保存到本地
-            try {
-                const saved = localStorage.getItem('semsiraDB');
-                let localDB = saved ? JSON.parse(saved) : { gurus: [] };
-                if(!localDB.gurus) localDB.gurus = [];
-                localDB.gurus.push(newGuru);
-                localStorage.setItem('semsiraDB', JSON.stringify(localDB));
-            } catch(e) { console.error("Local storage error", e); }
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "Memproses...";
+            btn.disabled = true;
 
-            // 触发 Firebase 逻辑 (通过自定义事件)
-            const event = new CustomEvent('firebaseRegister', { detail: newGuru });
+            // 触发模块内的逻辑
+            const event = new CustomEvent('doFirebaseSignUp', { 
+                detail: { email, pass, name, phone } 
+            });
             window.dispatchEvent(event);
-            
-            // 为了防止 Firebase 还没加载完，先给用户一个反馈
-            document.getElementById('main-btn').innerText = "Menghantar...";
-            document.getElementById('main-btn').disabled = true;
         };
     </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBxZIDIPRhwXT_1aeS-dKsG2kmuUyJLUlQ",
             authDomain: "semsirakehadiran.firebaseapp.com",
+            // 明确指定你的亚洲节点数据库 URL
+            databaseURL: "https://semsirakehadiran-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "semsirakehadiran",
             storageBucket: "semsirakehadiran.firebasestorage.app",
             messagingSenderId: "68504541700",
@@ -92,24 +86,46 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getDatabase(app);
 
-        // 监听来自页面的注册信号
-        window.addEventListener('firebaseRegister', (e) => {
-            const data = e.detail;
-            const gurusRef = ref(db, 'gurus');
-            const newGuruRef = push(gurusRef);
-            
-            set(newGuruRef, data)
-            .then(() => {
-                alert("Pendaftaran Berjaya!");
+        window.addEventListener('doFirebaseSignUp', async (e) => {
+            const { email, pass, name, phone } = e.detail;
+            const btn = document.getElementById('btn-submit');
+
+            try {
+                // 1. 在 Authentication 创建账号
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
+
+                // 2. 将扩展信息存入亚洲节点的 Realtime Database
+                // 使用 user.uid 作为键值，方便以后查询
+                await set(ref(db, 'users/' + user.uid), {
+                    name: name,
+                    phone: phone,
+                    email: email,
+                    role: 'guru',
+                    uid: user.uid,
+                    createdAt: new Date().toISOString()
+                });
+
+                alert("Akaun Berjaya Dicipta!");
                 window.location.href = 'login-guru.html';
-            })
-            .catch((error) => {
-                console.error(error);
-                alert("Simpanan Cloud gagal, tetapi data telah disimpan dalam peranti ini.");
-                window.location.href = 'login-guru.html';
-            });
+
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                btn.disabled = false;
+                btn.innerText = "Daftar Sekarang";
+
+                // 错误提示处理
+                if (error.code === 'auth/email-already-in-use') {
+                    alert("E-mel ini sudah digunakan!");
+                } else if (error.code === 'auth/invalid-email') {
+                    alert("Format e-mel tidak sah!");
+                } else {
+                    alert("Ralat: " + error.message);
+                }
+            }
         });
     </script>
 </body>
