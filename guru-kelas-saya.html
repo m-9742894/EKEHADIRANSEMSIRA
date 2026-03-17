@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMSIRA - Kelas Saya</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg-color: #0f172a; --panel-bg: #1e293b; --primary: #0ea5e9; --success: #22c55e; --danger: #ef4444; --warning: #f59e0b; --text-main: #f8fafc; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); }
+        nav { background-color: var(--panel-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
+        .nav-brand { font-size: 1.2rem; font-weight: bold; color: var(--primary); }
+        .nav-links a { color: var(--text-main); margin-left: 15px; text-decoration: none; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        .sub-card { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 15px; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        button.btn-success { background: var(--success); }
+        button.btn-danger { background: var(--danger); }
+        .inline-input { width: auto; display: inline-block; margin-right: 10px; }
+        input, select { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: var(--primary); }
+        @media print {
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-brand"><i class="fas fa-microchip"></i> SEMSIRA ATTENDANCE</div>
+        <div class="nav-links">
+            <a href="dashboard-guru.html"><i class="fas fa-arrow-left"></i> Kembali</a>
+            <button class="btn no-print" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h3><i class="fas fa-chalkboard"></i> Pengurusan Kelas Saya</h3>
+            <div id="pg-kelas-container" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function getDB() {
+            const saved = localStorage.getItem('semsiraDB');
+            return saved ? JSON.parse(saved) : { kelas: [], murid: [] };
+        }
+
+        function saveDB(db) {
+            localStorage.setItem('semsiraDB', JSON.stringify(db));
+        }
+
+        const getCurrentYear = () => new Date().getFullYear().toString();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                renderKelasSaya();
+            } else {
+                window.location.href = 'login-guru.html';
+            }
+        });
+
+        function renderKelasSaya() {
+            const container = document.getElementById('pg-kelas-container');
+            const db = getDB();
+            const kelasGuru = db.kelas.filter(k => k.guruId === currentUser?.id);
+
+            if (kelasGuru.length === 0) {
+                container.innerHTML = `
+                    <p style="color:var(--warning); margin:20px 0;">Anda belum mempunyai kelas.</p>
+                    <div class="no-print">
+                        <input type="text" id="pg-add-kelas-name" class="inline-input" placeholder="Nama Kelas Baru">
+                        <button class="btn btn-success" onclick="tambahKelas()">Tambah Kelas</button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            kelasGuru.forEach(k => {
+                html += `
+                    <div class="sub-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <div style="display:flex; align-items:center;">
+                                <input type="text" id="kelas-name-${k.id}" value="${k.name}" class="inline-input" style="font-size:1.2rem; font-weight:bold; color:var(--primary); width:200px;">
+                                <button class="btn" style="padding:5px 10px;" onclick="simpanNamaKelas(${k.id})"><i class="fas fa-save"></i></button>
+                            </div>
+                            <button class="btn btn-danger no-print" onclick="buangKelas(${k.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                        
+                        <div class="no-print" style="background:#0f172a; padding:15px; border-radius:5px; margin-bottom:15px; border:1px dashed var(--primary);">
+                            <input type="text" id="add-nama-${k.id}" class="inline-input" placeholder="Nama">
+                            <input type="text" id="add-ic-${k.id}" class="inline-input" placeholder="No IC">
+                            <input type="text" id="add-uid-${k.id}" class="inline-input" placeholder="UID">
+                            <button class="btn btn-success" onclick="tambahMurid(${k.id})">Tambah</button>
+                        </div>
+                        
+                        <table>
+                            <thead><tr><th>Nama</th><th>IC</th><th>UID</th><th class="no-print">Tindakan</th></tr></thead>
+                            <tbody>
+                `;
+
+                const muridKelas = db.murid.filter(m => m.kelasId === k.id);
+                if (muridKelas.length === 0) {
+                    html += '<tr><td colspan="4" style="text-align:center;">Belum ada murid.</td></tr>';
+                } else {
+                    muridKelas.forEach(m => {
+                        html += `
+                            <tr>
+                                <td><input type="text" id="murid-nama-${m.id}" value="${m.nama}"></td>
+                                <td><input type="text" id="murid-ic-${m.id}" value="${m.ic}"></td>
+                                <td><input type="text" id="murid-uid-${m.id}" value="${m.uid}"></td>
+                                <td class="no-print">
+                                    <button class="btn btn-success" onclick="simpanMurid(${m.id})"><i class="fas fa-save"></i></button>
+                                    <button class="btn btn-danger" onclick="buangMurid(${m.id})"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                html += `</tbody></table></div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function tambahKelas() {
+            const name = document.getElementById('pg-add-kelas-name')?.value;
+            if (name) {
+                const db = getDB();
+                db.kelas.push({ id: Date.now(), name: name, guruId: currentUser.id });
+                saveDB(db);
+                renderKelasSaya();
+            }
+        }
+
+        function simpanNamaKelas(kId) {
+            const db = getDB();
+            const kelas = db.kelas.find(k => k.id === kId);
+            if (kelas) {
+                kelas.name = document.getElementById(`kelas-name-${kId}`).value;
+                saveDB(db);
+                alert('Nama kelas disimpan!');
+            }
+        }
+
+        function buangKelas(kId) {
+            if (confirm('Pasti mahu buang kelas ini?')) {
+                const db = getDB();
+                db.kelas = db.kelas.filter(k => k.id !== kId);
+                db.murid = db.murid.filter(m => m.kelasId !== kId);
+                saveDB(db);
+                renderKelasSaya();
+            }
+        }
+
+        function tambahMurid(kId) {
+            const nama = document.getElementById(`add-nama-${kId}`).value;
+            const ic = document.getElementById(`add-ic-${kId}`).value;
+            const uid = document.getElementById(`add-uid-${kId}`).value;
+
+            if (nama && ic) {
+                const db = getDB();
+                db.murid.push({
+                    id: Date.now(),
+                    nama: nama,
+                    ic: ic,
+                    uid: uid,
+                    kelasId: kId,
+                    sejarahKelas: [{ tahun: getCurrentYear(), kelasId: kId }],
+                    kehadiran: []
+                });
+                saveDB(db);
+                renderKelasSaya();
+            }
+        }
+
+        function simpanMurid(mId) {
+            const db = getDB();
+            const murid = db.murid.find(m => m.id === mId);
+            if (murid) {
+                murid.nama = document.getElementById(`murid-nama-${mId}`).value;
+                murid.ic = document.getElementById(`murid-ic-${mId}`).value;
+                murid.uid = document.getElementById(`murid-uid-${mId}`).value;
+                saveDB(db);
+                alert('Maklumat murid disimpan!');
+            }
+        }
+
+        function buangMurid(mId) {
+            if (confirm('Pasti mahu buang murid ini?')) {
+                const db = getDB();
+                db.murid = db.murid.filter(m => m.id !== mId);
+                saveDB(db);
+                renderKelasSaya();
+            }
+        }
+    </script>
+</body>
+</html>
